@@ -1,17 +1,97 @@
+<!DOCTYPE html>
 <html>
   <head>
-      <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css">
   </head>
-  <body>
+
+  <body style="background-color:#010613">
+    <div class="topnav" style="padding-right: 25px">
+      <a href="home.html">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+          class="bi bi-house" viewBox="0 0 16 16">
+          <path
+            d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z"/>
+        </svg>
+      </a>
+      <a href="simulation.html">Simulation</a>
+      <a class="active" href="gambling.html">Gambling</a>
+      <a href="warning.html">Warning</a>
+    </div>
+
+    <div class="gamblingslider" style="color: white;">
+      <label for="range2" class="form-label">0</label>
+      <input type="range" class="form-range" min="0" max="50" id="range2">
+      <label for="range2" class="form-label">50</label>
+      <p style="justify-self: center;">Value: <span id="demo"></span></p>
+    </div>
+
+    <div style="justify-self: center;" class="buttonsplit">
+      <div class="dropdown" style="width: 40vw;">
+        <button onclick="toggleDropdown('dropdownOne', teamOne)" class="dropbtn">
+          Select Team 1
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+            class="bi bi-caret-down" viewBox="0 0 16 16">
+            <path
+              d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659" />
+          </svg>
+        </button>
+        <div id="dropdownOne" class="dropdown-content"></div>
+      </div>
+
+      <div class="dropdown" style="padding-top: 5%;">
+        <button onclick="toggleDropdown('dropdownTwo', teamTwo)" class="dropbtn">
+          Select Team 2
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+            class="bi bi-caret-down" viewBox="0 0 16 16">
+            <path
+              d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659" />
+          </svg>
+        </button>
+        <div id="dropdownTwo" class="dropdown-content"></div>
+      </div>
+    </div>
+
+    <script>
+      var slider = document.getElementById("range2");
+      var output = document.getElementById("demo");
+      output.innerHTML = slider.value;
+      slider.oninput = function() {
+        output.innerHTML = this.value;
+      }
+
+      function populateDropdown(dropdownId, items) {
+        const container = document.getElementById(dropdownId);
+        container.innerHTML = "";
+        items.forEach(item => {
+          const btn = document.createElement("button");
+          btn.textContent = item.value;
+          container.appendChild(btn);
+        });
+      }
+
+      function toggleDropdown(dropdownId, items) {
+        const container = document.getElementById(dropdownId);
+        if (container.innerHTML.trim() === "") {
+          populateDropdown(dropdownId, items);
+        }
+        container.classList.toggle("show");
+      }
+
+      window.onclick = function(event) {
+        if (!event.target.matches('.dropbtn') && !event.target.closest('.dropdown')) {
+          document.querySelectorAll(".dropdown-content").forEach(el => el.classList.remove("show"));
+        }
+      }
+
+      const teamOne = [
+        { value: 'Team'},
+        { value: 'Team'}
+      ];
+
+      const teamTwo = [
+        { value: 'Team'},
+        { value: 'Team'}
+      ];
+    </script>
   </body>
 </html>
-
-<div>
-<body style="background-color:black">
-<div class="topnav">
-  <a href="home.html">Home</a>
-  <a href="simulation.html">Simulation</a>
-  <a class="active" href="gambling.html">Gambling</a>
-</div>
-</div> 
-</div>
