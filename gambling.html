@@ -25,31 +25,71 @@
       <p style="justify-self: center;">Value: <span id="demo"></span></p>
     </div>
 
-    <div style="justify-self: center;" class="buttonsplit">
-      <div class="dropdown" style="width: 40vw;">
-        <button onclick="toggleDropdown('dropdownOne', teamOne)" class="dropbtn">
-          Select Team 1
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-            class="bi bi-caret-down" viewBox="0 0 16 16">
-            <path
-              d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659" />
-          </svg>
-        </button>
-        <div id="dropdownOne" class="dropdown-content"></div>
+    <div style="justify-self: center; display: grid; grid-template-columns: auto auto; gap: 2rem; " class="buttonsplit">
+      <!-- Left Column -->
+      <div style="display: grid; gap: 1rem; padding-top: 100px;">
+        <!-- Team 1 -->
+        <div class="dropdown" style="width: 40vw;">
+          <button onclick="toggleDropdown('dropdownOne', teamOne)" class="dropbtn">
+            Select Team 1
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+              class="bi bi-caret-down" viewBox="0 0 16 16">
+              <path
+                d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659" />
+            </svg>
+          </button>
+          <div id="dropdownOne" class="dropdown-content"></div>
+        </div>
+        
+        <!-- Team 3 -->
+        <div class="dropdown" style="padding-top: 150px;">
+          <button onclick="toggleDropdown('dropdownThree', teamThree)" class="dropbtn">
+            Select Player
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+              class="bi bi-caret-down" viewBox="0 0 16 16">
+              <path
+                d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659" />
+            </svg>
+          </button>
+          <div id="dropdownThree" class="dropdown-content"></div>
+        </div>
       </div>
 
-      <div class="dropdown" style="padding-top: 5%;">
-        <button onclick="toggleDropdown('dropdownTwo', teamTwo)" class="dropbtn">
-          Select Team 2
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-            class="bi bi-caret-down" viewBox="0 0 16 16">
-            <path
-              d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659" />
-          </svg>
-        </button>
-        <div id="dropdownTwo" class="dropdown-content"></div>
+      <!-- Right Column -->
+      <div style="display: grid; gap: 1rem;">
+        <div class="dropdown" style="align-self: start; padding-top: 100px;">
+          <button onclick="toggleDropdown('dropdownTwo', teamTwo)" class="dropbtn">
+            Select Team 2
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+              class="bi bi-caret-down" viewBox="0 0 16 16">
+              <path
+                d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659" />
+            </svg>
+          </button>
+          <div id="dropdownTwo" class="dropdown-content"></div>
+        </div>
+
+        <div class="dropdown" style="padding-top: 150px;">
+          <button onclick="toggleDropdown('dropdownFour', teamFour)" class="dropbtn">
+            Select Player
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+              class="bi bi-caret-down" viewBox="0 0 16 16">
+              <path
+                d="M3.204 5h9.592L8 10.481zm-.753.659 4.796 5.48a1 1 0 0 0 1.506 0l4.796-5.48c.566-.647.106-1.659-.753-1.659H3.204a1 1 0 0 0-.753 1.659" />
+            </svg>
+          </button>
+          <div id="dropdownFour" class="dropdown-content"></div>
+        </div>
       </div>
+
+      
     </div>
+          <div class="" style="justify-self: center; padding-top: 150px;">
+              <button onclick="" class="simbtn">
+                Run Simulation
+              </button>
+            </div>
+          </div>
 
     <script>
       var slider = document.getElementById("range2");
@@ -91,6 +131,16 @@
       const teamTwo = [
         { value: 'Team'},
         { value: 'Team'}
+      ];
+
+      const teamThree = [
+        { value: 'Player'},
+        { value: 'Player'}
+      ];
+
+      const teamFour = [
+        { value: 'Player'},
+        { value: 'Player'}
       ];
     </script>
   </body>
