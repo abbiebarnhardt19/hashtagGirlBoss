@@ -75,6 +75,7 @@ body {
   width: 100vw;
   gap: 10px;
   height: calc(100vh - 80px);
+  overflow: hidden;
 }
 
 .warning-container {
@@ -380,6 +381,12 @@ body {
   border: 2px solid #ffffff;
 }
 
+ .simbtn a {
+  color: inherit;
+  text-decoration: none; 
+  }
+
+
 .simbtn:hover, .simbtn:focus {
   background-color: #031D44;
 }
@@ -394,7 +401,14 @@ body {
   cursor: pointer;
   border-radius: 40px;
   border: 2px solid #ffffff;
+  text-decoration: none;
 }
+
+ .simArrowbtn a {
+  color: inherit;
+  text-decoration: none; 
+  }
+
 
 .simArrowbtn:hover {
   background-color: #031D44;
