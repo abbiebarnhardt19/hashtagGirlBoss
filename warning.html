@@ -5,13 +5,13 @@
 <div>
 <body style="background-color:#010613">
 <div class="topnav" style="padding-right: 25px">
-  <a href="home.html">
+  <a id="homeBtn" href="home.html" class="disabled">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
     <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z"/>
     </svg>
   </a>
-  <a href="simulation.html">Simulation</a>
-  <a href="gambling.html">Gambling</a>
+  <a id="simulationBtn" href="simulation.html" class="disabled">Simulation</a>
+  <a id="gamblingBtn" href="gambling.html" class="disabled">Gambling</a>
   <a  class="active" href="warning.html">Warning</a>
 </div>
 
@@ -32,10 +32,41 @@
   <div class="warningbox textwarning" style="font-size: 18px;">
     <a>The predictions and statistics on this website are for entertainment purposes only. We do not guarantee the accuracy or outcomes of any analysis or prediction. You are solely responsible for any betting or gambling decisions you make based on our content. We are not liable for any financial losses or damages resulting from such activities. Please gamble responsibly and follow all applicable laws.</a>
   <div class="agree">
-    <a  href="gambling.html">I Agree</a>
+    <a id="agreeBtn" href="gambling.html">I Agree</a>
   </div>
   </div>
 </div>
+
+
+  <script>
+    const simulationBtn = document.getElementById("simulationBtn");
+    const gamblingBtn = document.getElementById("gamblingBtn");
+    const homeBtn = document.getElementById("homeBtn");
+    const agreeBtn = document.getElementById("agreeBtn");
+
+    if (localStorage.getItem("agreed") === "true") {
+      enableLinks();
+    } else {
+      disableLinks();
+    }
+
+    agreeBtn.addEventListener("click", function() {
+      localStorage.setItem("agreed", "true");
+      enableLinks();
+    });
+
+    function disableLinks() {
+      simulationBtn.classList.add("disabled");
+      gamblingBtn.classList.add("disabled");
+      homeBtn.classList.add("disabled");
+    }
+
+    function enableLinks() {
+      simulationBtn.classList.remove("disabled");
+      gamblingBtn.classList.remove("disabled");
+      homeBtn.classList.remove("disabled");
+    }
+  </script>
 
 </body>
 </html>

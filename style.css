@@ -42,6 +42,11 @@ body {
   color: black;
 }
 
+.disabled {
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
 .agree {
   display: flex;
   justify-content: center;

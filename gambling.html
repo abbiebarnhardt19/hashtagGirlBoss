@@ -30,7 +30,7 @@
       <div style="display: grid; gap: 1rem; padding-top: 100px;">
         <!-- Team 1 -->
         <div class="dropdown" style="width: 40vw;">
-          <button onclick="toggleDropdown('dropdownOne', teamOne)" class="dropbtn">
+          <button onclick="toggleDropdown('dropdownOne')" class="dropbtn">
             Select Team 1
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
               class="bi bi-caret-down" viewBox="0 0 16 16">
@@ -43,7 +43,7 @@
         
         <!-- Team 3 -->
         <div class="dropdown" style="padding-top: 150px;">
-          <button onclick="toggleDropdown('dropdownThree', teamThree)" class="dropbtn">
+          <button onclick="toggleDropdown('dropdownThree')" class="dropbtn">
             Select Player
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
               class="bi bi-caret-down" viewBox="0 0 16 16">
@@ -58,7 +58,7 @@
       <!-- Right Column -->
       <div style="display: grid; gap: 1rem;">
         <div class="dropdown" style="align-self: start; padding-top: 100px;">
-          <button onclick="toggleDropdown('dropdownTwo', teamTwo)" class="dropbtn">
+          <button onclick="toggleDropdown('dropdownTwo')" class="dropbtn">
             Select Team 2
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
               class="bi bi-caret-down" viewBox="0 0 16 16">
@@ -70,7 +70,7 @@
         </div>
 
         <div class="dropdown" style="padding-top: 150px;">
-          <button onclick="toggleDropdown('dropdownFour', teamFour)" class="dropbtn">
+          <button onclick="toggleDropdown('dropdownFour')" class="dropbtn">
             Select Player
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
               class="bi bi-caret-down" viewBox="0 0 16 16">
@@ -93,29 +93,70 @@
           </div>
 
     <script>
-      var slider = document.getElementById("range2");
-      var output = document.getElementById("demo");
-      output.innerHTML = slider.value;
-      slider.oninput = function() {
-        output.innerHTML = this.value;
-      }
+      const teamOneButton = document.querySelector("button[onclick*='dropdownOne']");
+      const playerOneButton = document.querySelector("button[onclick*='dropdownThree']");
+      const teamTwoButton = document.querySelector("button[onclick*='dropdownTwo']");
+      const playerTwoButton = document.querySelector("button[onclick*='dropdownFour']");
 
-      function populateDropdown(dropdownId, items) {
+      let teams = [];
+      let players = [];
+
+      fetch('teams.json')
+        .then(res => res.json())
+        .then(data => {
+          players = data;
+
+          const teamSet = new Set(data.map(p => p.TeamName));
+          teams = [...teamSet];
+
+          populateDropdown('dropdownOne', teams, selectTeamOne);
+          populateDropdown('dropdownTwo', teams, selectTeamTwo);
+        })
+        .catch(err => console.error('Error loading JSON:', err));
+
+
+      function populateDropdown(dropdownId, items, callback) {
         const container = document.getElementById(dropdownId);
         container.innerHTML = "";
         items.forEach(item => {
-          const btn = document.createElement("button");
-          btn.textContent = item.value;
-          container.appendChild(btn);
+          const option = document.createElement("button");
+          option.textContent = item;
+          option.onclick = () => callback(item);
+          container.appendChild(option);
         });
       }
 
-      function toggleDropdown(dropdownId, items) {
-        const container = document.getElementById(dropdownId);
-        if (container.innerHTML.trim() === "") {
-          populateDropdown(dropdownId, items);
-        }
-        container.classList.toggle("show");
+      //LEFT COLUMN
+      function selectTeamOne(team) {
+        document.getElementById('dropdownOne').classList.remove('show');
+        teamOneButton.innerHTML = `Team 1: ${team}`;
+        const playerList = players.filter(p => p.TeamName === team).map(p => p.PlayerName);
+        populateDropdown('dropdownThree', playerList, player => selectPlayerOne(team, player));
+        playerOneButton.innerHTML = `Select Player`;
+      }
+
+      function selectPlayerOne(team, player) {
+        document.getElementById('dropdownThree').classList.remove('show');
+        playerOneButton.innerHTML = `Player: ${player}`; 
+      }
+
+      //RIGHT COLUMN
+      function selectTeamTwo(team) {
+        document.getElementById('dropdownTwo').classList.remove('show');
+        teamTwoButton.innerHTML = `Team 2: ${team}`; 
+        const playerList = players.filter(p => p.TeamName === team).map(p => p.PlayerName);
+        populateDropdown('dropdownFour', playerList, player => selectPlayerTwo(team, player));
+        playerTwoButton.innerHTML = `Select Player`; 
+      }
+
+      function selectPlayerTwo(team, player) {
+        document.getElementById('dropdownFour').classList.remove('show');
+        playerTwoButton.innerHTML = `Player: ${player}`; 
+      }
+
+
+      function toggleDropdown(dropdownId) {
+        document.getElementById(dropdownId).classList.toggle('show');
       }
 
       window.onclick = function(event) {
@@ -123,26 +164,6 @@
           document.querySelectorAll(".dropdown-content").forEach(el => el.classList.remove("show"));
         }
       }
-
-      const teamOne = [
-        { value: 'Team'},
-        { value: 'Team'}
-      ];
-
-      const teamTwo = [
-        { value: 'Team'},
-        { value: 'Team'}
-      ];
-
-      const teamThree = [
-        { value: 'Player'},
-        { value: 'Player'}
-      ];
-
-      const teamFour = [
-        { value: 'Player'},
-        { value: 'Player'}
-      ];
     </script>
   </body>
 </html>
