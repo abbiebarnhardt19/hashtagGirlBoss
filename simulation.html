@@ -17,21 +17,21 @@
 <div class="sim-container">
   <div class="simbox"> 
     <div class="textwrap"> 
-      <p class="textsim left">T1</p>
-      <p class="textsim right">T2</p>
+      <p class="textsim left"></p>
+      <p class="textsim right"></p>
     </div>
 
     <div class="gridwrap">
 
 
-    <div class="gridcontainer left">
+    <div class="gridcontainer left" id="grid-left">
       <div class="griditem">Player</div>
       <div class="griditem">Player</div>
       <div class="griditem">Player</div>
       <div class="griditem">Player</div>
       <div class="griditem">Player</div>
     </div>
-    <div class="gridcontainer right">
+    <div class="gridcontainer right" id="grid-right">
       <div class="griditem">Player</div>
       <div class="griditem">Player</div>
       <div class="griditem">Player</div>
@@ -62,4 +62,49 @@
 </div>
 
 </body>
+
+<script>
+  const team1 = localStorage.getItem('team1');
+  const player1 = localStorage.getItem('player1');
+  const team2 = localStorage.getItem('team2');
+  const player2 = localStorage.getItem('player2');
+
+  const gridLeft = document.querySelector(".gridcontainer.left");
+  const gridRight = document.querySelector(".gridcontainer.right");
+
+  function getRandomItems(array, n) {
+    const shuffled = array.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, n);
+  }
+
+  fetch('teams.json')
+    .then(res => res.json())
+    .then(data => {
+      if (team1) {
+        const team1Players = data.filter(p => p.TeamName === team1);
+        const randomTeam1 = getRandomItems(team1Players, 5);
+        gridLeft.innerHTML = `
+          <div class="textsim team-name">${team1}</div>
+          ${randomTeam1.map(p =>
+            `<div class="griditem ${p.PlayerName === player1 ? 'selected' : ''}">${p.PlayerName}</div>`
+          ).join('')}
+        `;
+      }
+
+      if (team2) {
+        const team2Players = data.filter(p => p.TeamName === team2);
+        const randomTeam2 = getRandomItems(team2Players, 5);
+        gridRight.innerHTML = `
+          <div class="textsim team-name">${team2}</div>
+          ${randomTeam2.map(p =>
+            `<div class="griditem ${p.PlayerName === player2 ? 'selected' : ''}">${p.PlayerName}</div>`
+          ).join('')}
+        `;
+      }
+    })
+    .catch(err => console.error("Error loading team data:", err));
+</script>
+
+
+
 </html>

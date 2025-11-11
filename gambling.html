@@ -130,6 +130,7 @@
       function selectTeamOne(team) {
         document.getElementById('dropdownOne').classList.remove('show');
         teamOneButton.innerHTML = `Team 1: ${team}`;
+        localStorage.setItem('team1', team);
         const playerList = players.filter(p => p.TeamName === team).map(p => p.PlayerName);
         populateDropdown('dropdownThree', playerList, player => selectPlayerOne(team, player));
         playerOneButton.innerHTML = `Select Player`;
@@ -138,12 +139,14 @@
       function selectPlayerOne(team, player) {
         document.getElementById('dropdownThree').classList.remove('show');
         playerOneButton.innerHTML = `Player: ${player}`; 
+        localStorage.setItem('player1', player);
       }
 
       //RIGHT COLUMN
       function selectTeamTwo(team) {
         document.getElementById('dropdownTwo').classList.remove('show');
         teamTwoButton.innerHTML = `Team 2: ${team}`; 
+        localStorage.setItem('team2', team);
         const playerList = players.filter(p => p.TeamName === team).map(p => p.PlayerName);
         populateDropdown('dropdownFour', playerList, player => selectPlayerTwo(team, player));
         playerTwoButton.innerHTML = `Select Player`; 
@@ -152,6 +155,7 @@
       function selectPlayerTwo(team, player) {
         document.getElementById('dropdownFour').classList.remove('show');
         playerTwoButton.innerHTML = `Player: ${player}`; 
+        localStorage.setItem('player2', player);
       }
 
 
