@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baseball Game Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .team-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+            color: #666;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        textarea {
+            min-height: 100px;
+            font-family: Arial, sans-serif;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 20px 0;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f0f8ff;
+            border-radius: 5px;
+            display: none;
+        }
+        .result-section {
+            margin: 20px 0;
+        }
+        .stat-box {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .win-pct {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .home-team { color: #2196F3; }
+        .away-team { color: #FF5722; }
+        .connection-status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .connected {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        .disconnected {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚾ Baseball Game Simulator</h1>
+        
+        <div id="connectionStatus" class="connection-status disconnected">
+            Checking server connection...
+        </div>
+        
+        <div class="team-section away-team">
+            <h2>Away Team</h2>
+            <label for="away_pitcher">Starting Pitcher:</label>
+            <input type="text" id="away_pitcher" value="Mitch Spence">
+            
+            <label for="away_lineup">Batting Lineup (9 players, comma-separated):</label>
+            <textarea id="away_lineup">Lawrence Butler, Brent Rooker, Nick Kurtz, Tyler Soderstrom, Jacob Wilson, Carlos Cortes, Darell Hernaiz, Willie Maclver, Max Schuemann</textarea>
+        </div>
+        
+        <div class="team-section home-team">
+            <h2>Home Team</h2>
+            <label for="home_pitcher">Starting Pitcher:</label>
+            <input type="text" id="home_pitcher" value="Carmen Mlodzinski">
+            
+            <label for="home_lineup">Batting Lineup (9 players, comma-separated):</label>
+            <textarea id="home_lineup">Lawrence Butler, Brent Rooker, Nick Kurtz, Tyler Soderstrom, Jacob Wilson, Carlos Cortes, Darell Hernaiz, Willie Maclver, Max Schuemann</textarea>
+        </div>
+        
+        <label for="n_simulations">Number of Simulations:</label>
+        <input type="number" id="n_simulations" value="1000" min="1" max="10000">
+        
+        <button onclick="runSimulation()" id="simulateBtn">Run Simulation</button>
+        
+        <div id="results"></div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:5001';
+        
+        async function checkServerConnection() {
+            const statusDiv = document.getElementById('connectionStatus');
+            try {
+                const response = await fetch(`${API_URL}/health`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    statusDiv.className = 'connection-status connected';
+                    statusDiv.textContent = '✓ Connected to simulation server';
+                    console.log('✓ Connected to simulation server');
+                    return true;
+                } else {
+                    throw new Error('Server responded with error');
+                }
+            } catch (error) {
+                statusDiv.className = 'connection-status disconnected';
+                statusDiv.innerHTML = `
+                    ✗ Cannot connect to simulation server<br>
+                    <small>Make sure Flask server is running: python app.py</small><br>
+                    <small>Error: ${error.message}</small>
+                `;
+                console.error('✗ Cannot connect to simulation server:', error);
+                return false;
+            }
+        }
+        
+        async function runSimulation() {
+            const resultsDiv = document.getElementById('results');
+            const button = document.getElementById('simulateBtn');
+            
+            // First check if server is connected
+            const isConnected = await checkServerConnection();
+            if (!isConnected) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>Server Not Running</h3>
+                        <p>Please start the Flask server first:</p>
+                        <ol>
+                            <li>Open a terminal/command prompt</li>
+                            <li>Navigate to your project directory</li>
+                            <li>Run: <code>python app.py</code></li>
+                            <li>Wait for "Running on http://0.0.0.0:5001"</li>
+                            <li>Then try again</li>
+                        </ol>
+                    </div>
+                `;
+                resultsDiv.style.display = 'block';
+                return;
+            }
+            
+            // Get input values
+            const awayLineup = document.getElementById('away_lineup').value
+                .split(',')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+            const homeLineup = document.getElementById('home_lineup').value
+                .split(',')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+            const awayPitcher = document.getElementById('away_pitcher').value.trim();
+            const homePitcher = document.getElementById('home_pitcher').value.trim();
+            const nSimulations = parseInt(document.getElementById('n_simulations').value);
+            
+            // Validate inputs
+            if (!awayPitcher || !homePitcher) {
+                resultsDiv.innerHTML = '<div class="error">Please enter both pitchers</div>';
+                resultsDiv.style.display = 'block';
+                return;
+            }
+            
+            if (awayLineup.length !== 9 || homeLineup.length !== 9) {
+                resultsDiv.innerHTML = '<div class="error">Each team must have exactly 9 players in the lineup</div>';
+                resultsDiv.style.display = 'block';
+                return;
+            }
+            
+            // Show loading state
+            button.disabled = true;
+            button.textContent = 'Running Simulation...';
+            resultsDiv.innerHTML = '<div class="loading">⚾ Simulating games, please wait...</div>';
+            resultsDiv.style.display = 'block';
+            
+            try {
+                // Prepare JSON payload
+                const payload = {
+                    away_lineup: awayLineup,
+                    away_pitcher: awayPitcher,
+                    home_lineup: homeLineup,
+                    home_pitcher: homePitcher,
+                    n_simulations: nSimulations
+                };
+                
+                console.log('Sending request:', payload);
+                
+                // Make API call with timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+                
+                const response = await fetch(`${API_URL}/simulate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                    mode: 'cors',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Simulation failed');
+                }
+                
+                console.log('Received results:', data);
+                
+                // Display results
+                displayResults(data);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                
+                let errorMessage = error.message;
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Request timed out. The simulation is taking too long.';
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Cannot connect to server. Make sure the Flask server is running (python app.py)';
+                }
+                
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>Error</h3>
+                        <p>${errorMessage}</p>
+                        <details>
+                            <summary>Technical Details</summary>
+                            <pre>${error.stack || error}</pre>
+                        </details>
+                    </div>
+                `;
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Run Simulation';
+            }
+        }
+        
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            
+            let html = '<h2>Simulation Results</h2>';
+            
+            // Win percentages
+            html += '<div class="result-section">';
+            html += '<div class="stat-box">';
+            html += `<div class="win-pct home-team">Home Team Win %: ${(data.home_win_pct * 100).toFixed(1)}%</div>`;
+            html += `<div class="win-pct away-team">Away Team Win %: ${(data.away_win_pct * 100).toFixed(1)}%</div>`;
+            html += '</div>';
+            html += '</div>';
+            
+            // Average scores
+            html += '<div class="result-section">';
+            html += '<h3>Average Scores</h3>';
+            html += '<div class="stat-box">';
+            html += `<p><strong>Home Score:</strong> ${data.avg_home_score.toFixed(2)} runs</p>`;
+            html += `<p><strong>Away Score:</strong> ${data.avg_away_score.toFixed(2)} runs</p>`;
+            html += `<p><strong>Total Strikeouts:</strong> ${data.avg_total_strikeouts.toFixed(1)}</p>`;
+            html += '</div>';
+            html += '</div>';
+            
+            // Pitcher stats
+            html += '<div class="result-section">';
+            html += '<h3>Pitcher Statistics</h3>';
+            for (const [pitcher, stats] of Object.entries(data.pitcher_stats)) {
+                html += '<div class="stat-box">';
+                html += `<h4>${pitcher}</h4>`;
+                html += `<p><strong>Avg Strikeouts:</strong> ${stats.strikeouts.toFixed(2)}</p>`;
+                html += `<p><strong>Avg Hits Allowed:</strong> ${stats.hits_allowed.toFixed(2)}</p>`;
+                html += `<p><strong>Avg Walks Allowed:</strong> ${stats.walks_allowed.toFixed(2)}</p>`;
+                html += `<p><strong>Avg Runs Allowed:</strong> ${stats.runs_allowed.toFixed(2)}</p>`;
+                html += '</div>';
+            }
+            html += '</div>';
+            
+            // Top hitters (players who got hits most frequently)
+            html += '<div class="result-section">';
+            html += '<h3>Hit Frequency (Top 10)</h3>';
+            const sortedHitters = Object.entries(data.player_hit_frequency)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            if (sortedHitters.length > 0) {
+                html += '<div class="stat-box">';
+                for (const [player, frequency] of sortedHitters) {
+                    html += `<p><strong>${player}:</strong> Got a hit in ${(frequency / 10).toFixed(1)}% of games</p>`;
+                }
+                html += '</div>';
+            }
+            html += '</div>';
+            
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+        }
+        
+        // Check server connection on page load
+        window.onload = function() {
+            checkServerConnection();
+        };
+    </script>
+</body>
+</html>
