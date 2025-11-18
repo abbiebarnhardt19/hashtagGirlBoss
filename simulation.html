@@ -1,110 +1,173 @@
+<!DOCTYPE html>
 <html>
-  <head>
-      <link rel="stylesheet" href="style.css">
-  </head>
-<body style="background-color:#010613">
+<head>
+  <meta charset="utf-8" />
+  <title>Simulation</title>
+
+  <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+  <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; color: #fff; font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; }
+    body { min-height: 100vh; background: black; overflow-x: hidden; }
+    .topnav { background-color: #031D44; overflow: hidden; height: 80px; width: 100%; border-bottom: #ffffff 2px solid; }
+    .topnav a { float: right; color: white; text-align: center; padding: 12px 16px; margin: 16px; text-decoration: none; border-radius: 20px; font-size: 17px; }
+    .topnav a:hover { background-color: #021532; color: white; }
+    .topnav a.active { background-color: white; color: black; }
+    .disabled { pointer-events: none; opacity: 0.4; }
+    .sim-container { display:flex; justify-content:center; margin-top:24px; }
+    .simbox { width:100%; max-width:1100px; padding:18px; border-radius:10px; }
+    .gridwrap { display:flex; gap:40px; justify-content:space-between; align-items:flex-start; }
+    .gridcontainer { width:42%; background:#071227; padding:14px; border-radius:10px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+    .team-title { font-size:18px; margin-bottom:10px; font-weight:700; text-align:center; }
+    .griditem { padding:8px; margin:6px 0; background:#0f2436; border-radius:6px; text-align:center; }
+    .griditem.selected { background:#ffd54f; color:#000; font-weight:700; }
+    .sbox-container { margin-top:20px; display:flex; justify-content:center; gap:20px; align-items:center; }
+    .sbox { display:flex; align-items:center; gap:12px; }
+    .circle { width:36px; height:36px; border-radius:50%; background:#ffffff; }
+    .sboxtext { font-size:22px; font-weight:700; }
+    .results { margin-top:18px; display:flex; gap:20px; justify-content:space-between; }
+    .result-box { background:#071227; padding:12px; border-radius:8px; width:32%; min-height:80px; }
+    .result-box h3 { margin:0 0 6px 0; font-size:14px; }
+    .result-box pre { margin:0; white-space:pre-wrap; color:#e6eef8; font-size:13px; }
+  </style>
+</head>
+
+<body>
+
 <div class="topnav" style="padding-right: 25px">
-  <a href="home.html">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
-    <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z"/>
-    </svg>
-  </a>
-  <a class="active" href="simulation.html">Simulation</a>
-  <a href="gambling.html">Gambling</a>
-  <a href="warning.html">Warning</a>
+      <a href="home.html">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+          class="bi bi-house" viewBox="0 0 16 16">
+          <path
+            d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z"/>
+        </svg>
+      </a>
+      <a class="active" href="simulation.html">Simulation</a>
+      <a href="gambling.html">Gambling</a>
+      <a href="warning.html">Warning</a>
 </div>
-</div>
+
 <div class="sim-container">
-  <div class="simbox"> 
-    <div class="textwrap"> 
-      <p class="textsim left"></p>
-      <p class="textsim right"></p>
-    </div>
+  <div class="simbox">
 
+    <!-- TEAMS -->
     <div class="gridwrap">
+      <div class="gridcontainer left">
+        <div class="team-title" id="team1-title">Team 1</div>
+        <div id="team1-players"></div>
+      </div>
 
-
-    <div class="gridcontainer left" id="grid-left">
-      <div class="griditem">Player</div>
-      <div class="griditem">Player</div>
-      <div class="griditem">Player</div>
-      <div class="griditem">Player</div>
-      <div class="griditem">Player</div>
-    </div>
-    <div class="gridcontainer right" id="grid-right">
-      <div class="griditem">Player</div>
-      <div class="griditem">Player</div>
-      <div class="griditem">Player</div>
-      <div class="griditem">Player</div>
-      <div class="griditem">Player</div>
-    </div>
-    </div>
-
-    <div class="sbox-container">
-      <div class="sbox">
-      <div class="circle"></div>
-      <div class="sboxtext">10%</div>
+      <div class="gridcontainer right">
+        <div class="team-title" id="team2-title">Team 2</div>
+        <div id="team2-players"></div>
       </div>
     </div>
 
+    <!-- WIN PERCENT CIRCLE -->
+    <div class="sbox-container">
+      <div class="sbox">
+        <div class="circle"></div>
+        <div class="sboxtext" id="percentDisplay">--%</div>
+      </div>
+    </div>
+
+    <!-- OUTPUT BOXES -->
+    <div class="results">
+      <div class="result-box">
+        <h3>Win %</h3>
+        <pre id="winPct">--</pre>
+      </div>
+      <div class="result-box">
+        <h3>Predicted Scores</h3>
+        <pre id="predScores">--</pre>
+      </div>
+      <div class="result-box">
+        <h3>Top 5 Hit %</h3>
+        <pre id="top5">--</pre>
+      </div>
+    </div>
+
+    <button onclick="runSim()" style="color:#000000;margin-top:20px;width:100%;padding:14px;border-radius:8px;font-size:16px;">Run Simulation</button>
 
   </div>
 </div>
 
-<div style="position: fixed; bottom: 20px; left: 20px; width: 100%; display: flex; justify-content: start;">
-  <a  href="gambling.html">
-    <button class="simArrowbtn">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
-      <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
-    </svg>
-  </button>
-</a>
-</div>
-
-</body>
-
 <script>
-  const team1 = localStorage.getItem('team1');
-  const player1 = localStorage.getItem('player1');
-  const team2 = localStorage.getItem('team2');
-  const player2 = localStorage.getItem('player2');
+const API_URL = "http://localhost:5001";
 
-  const gridLeft = document.querySelector(".gridcontainer.left");
-  const gridRight = document.querySelector(".gridcontainer.right");
+/* --------------------------------------------------
+   Fill TEAM GRIDS dynamically (example players)
+   Replace with your selection system
+-------------------------------------------------- */
+const team1 = ["Player A1","Player A2","Player A3","Player A4","Player A5","Player A6","Player A7","Player A8","Player A9"];
+const team2 = ["Player B1","Player B2","Player B3","Player B4","Player B5","Player B6","Player B7","Player B8","Player B9"];
 
-  function getRandomItems(array, n) {
-    const shuffled = array.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, n);
-  }
+function populateTeams() {
+    const t1 = document.getElementById("team1-players");
+    const t2 = document.getElementById("team2-players");
+    t1.innerHTML = "";
+    t2.innerHTML = "";
+    team1.forEach(p => t1.innerHTML += `<div class="griditem">${p}</div>`);
+    team2.forEach(p => t2.innerHTML += `<div class="griditem">${p}</div>`);
+}
 
-  fetch('teams.json')
-    .then(res => res.json())
-    .then(data => {
-      if (team1) {
-        const team1Players = data.filter(p => p.TeamName === team1);
-        const randomTeam1 = getRandomItems(team1Players, 5);
-        gridLeft.innerHTML = `
-          <div class="textsim team-name">${team1}</div>
-          ${randomTeam1.map(p =>
-            `<div class="griditem ${p.PlayerName === player1 ? 'selected' : ''}">${p.PlayerName}</div>`
-          ).join('')}
-        `;
-      }
+populateTeams();
 
-      if (team2) {
-        const team2Players = data.filter(p => p.TeamName === team2);
-        const randomTeam2 = getRandomItems(team2Players, 5);
-        gridRight.innerHTML = `
-          <div class="textsim team-name">${team2}</div>
-          ${randomTeam2.map(p =>
-            `<div class="griditem ${p.PlayerName === player2 ? 'selected' : ''}">${p.PlayerName}</div>`
-          ).join('')}
-        `;
-      }
-    })
-    .catch(err => console.error("Error loading team data:", err));
+async function runSim() {
+    document.getElementById("winPct").textContent = "Loading...";
+    document.getElementById("predScores").textContent = "Loading...";
+    document.getElementById("top5").textContent = "Loading...";
+    document.getElementById("percentDisplay").textContent = "--%";
+
+    const payload = {
+        away_lineup: team1,
+        home_lineup: team2,
+        away_pitcher: localStorage.getItem("away_pitcher"),
+        home_pitcher: localStorage.getItem("home_pitcher"),
+        n_simulations: 500
+    };
+
+    try {
+        const r = await fetch(`${API_URL}/simulate`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(payload)
+        });
+
+        const data = await r.json();
+        updateUI(data);
+
+    } catch (err) {
+        console.log("Error:", err);
+        document.getElementById("winPct").textContent = "Error";
+    }
+}
+
+function updateUI(d) {
+    const home = (d.home_win_pct * 100).toFixed(1);
+    const away = (d.away_win_pct * 100).toFixed(1);
+
+    document.getElementById("percentDisplay").textContent = home + "%";
+
+    document.getElementById("winPct").textContent =
+        `Home Win %: ${home}%\nAway Win %: ${away}%`;
+
+    document.getElementById("predScores").textContent =
+        `Home Score: ${d.avg_home_score.toFixed(2)}\nAway Score: ${d.avg_away_score.toFixed(2)}\nStrikeouts: ${d.avg_total_strikeouts.toFixed(1)}`;
+
+    // Top 5 Hit %
+    const sorted = Object.entries(d.player_hit_frequency)
+        .sort((a,b) => b[1] - a[1])
+        .slice(0,5);
+
+    let txt = "";
+    for (const [player, freq] of sorted) {
+        txt += `${player}: ${(freq/10).toFixed(1)}%\n`;
+    }
+    document.getElementById("top5").textContent = txt;
+}
 </script>
 
-
-
+</body>
 </html>

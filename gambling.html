@@ -2,6 +2,7 @@
 <html>
   <head>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   </head>
 
   <body style="background-color:#010613">
@@ -98,84 +99,122 @@
       const teamTwoButton = document.querySelector("button[onclick*='dropdownTwo']");
       const playerTwoButton = document.querySelector("button[onclick*='dropdownFour']");
 
-      let teams = [];
-      let players = [];
+      let players = []; // CSV data
+      let selectedTeamOne = null;
+      let selectedTeamTwo = null;
 
       fetch('teams.json')
         .then(res => res.json())
         .then(data => {
-          players = data;
-
-          const teamSet = new Set(data.map(p => p.TeamName));
-          teams = [...teamSet];
-
-          populateDropdown('dropdownOne', teams, selectTeamOne);
-          populateDropdown('dropdownTwo', teams, selectTeamTwo);
+            const uniqueTeams = [...new Set(data.map(item => item.TeamName))];
+            populateDropdown('dropdownOne', uniqueTeams, team => {
+                selectedTeamOne = team;
+                selectTeamOne(team);
+            });
+            populateDropdown('dropdownTwo', uniqueTeams, team => {
+                selectedTeamTwo = team;
+                selectTeamTwo(team);
+            });
         })
-        .catch(err => console.error('Error loading JSON:', err));
+        .catch(err => console.error('Error loading teams.json:', err));
 
+      Papa.parse("API Output-Pitchers.csv", {
+          download: true,
+          header: true,
+          complete: function(results) {
+              players = results.data;
+
+              if (selectedTeamOne) updatePlayerDropdown('dropdownThree', selectedTeamOne, selectPlayerOne);
+              if (selectedTeamTwo) updatePlayerDropdown('dropdownFour', selectedTeamTwo, selectPlayerTwo);
+          }
+      });
 
       function populateDropdown(dropdownId, items, callback) {
         const container = document.getElementById(dropdownId);
-        container.innerHTML = "";
+        container.innerHTML = ""; // clear previous content
+
         items.forEach(item => {
-          const option = document.createElement("button");
-          option.textContent = item;
-          option.onclick = () => callback(item);
-          container.appendChild(option);
+            const btn = document.createElement("button");
+            btn.textContent = item;
+            btn.onclick = () => {
+                callback(item);
+                container.classList.remove("show"); // close dropdown after selection
+            };
+            container.appendChild(btn);
         });
       }
-
-      //LEFT COLUMN
+      // --- Team selection ---
       function selectTeamOne(team) {
-        document.getElementById('dropdownOne').classList.remove('show');
-        teamOneButton.innerHTML = `Team 1: ${team}`;
-        localStorage.setItem('team1', team);
-        const playerList = players.filter(p => p.TeamName === team).map(p => p.PlayerName);
-        populateDropdown('dropdownThree', playerList, player => selectPlayerOne(team, player));
-        playerOneButton.innerHTML = `Select Player`;
+          document.getElementById('dropdownOne').classList.remove('show');
+          teamOneButton.innerHTML = `Team 1: ${team}`;
+          localStorage.setItem('team1', team);
+
+          updatePlayerDropdown('dropdownThree', team, selectPlayerOne);
+          playerOneButton.innerHTML = "Select Player";
       }
 
-      function selectPlayerOne(team, player) {
-        document.getElementById('dropdownThree').classList.remove('show');
-        playerOneButton.innerHTML = `Player: ${player}`; 
-        localStorage.setItem('player1', player);
-      }
-
-      //RIGHT COLUMN
       function selectTeamTwo(team) {
-        document.getElementById('dropdownTwo').classList.remove('show');
-        teamTwoButton.innerHTML = `Team 2: ${team}`; 
-        localStorage.setItem('team2', team);
-        const playerList = players.filter(p => p.TeamName === team).map(p => p.PlayerName);
-        populateDropdown('dropdownFour', playerList, player => selectPlayerTwo(team, player));
-        playerTwoButton.innerHTML = `Select Player`; 
+          document.getElementById('dropdownTwo').classList.remove('show');
+          teamTwoButton.innerHTML = `Team 2: ${team}`;
+          localStorage.setItem('team2', team);
+
+          updatePlayerDropdown('dropdownFour', team, selectPlayerTwo);
+          playerTwoButton.innerHTML = "Select Player";
+      }
+
+      // --- Player selection ---
+      function selectPlayerOne(team, player) {
+          document.getElementById('dropdownThree').classList.remove('show');
+          playerOneButton.innerHTML = `Player: ${player}`;
+          localStorage.setItem('player1', player);
+          localStorage.setItem('home_pitcher', player);
       }
 
       function selectPlayerTwo(team, player) {
-        document.getElementById('dropdownFour').classList.remove('show');
-        playerTwoButton.innerHTML = `Player: ${player}`; 
-        localStorage.setItem('player2', player);
+          document.getElementById('dropdownFour').classList.remove('show');
+          playerTwoButton.innerHTML = `Player: ${player}`;
+          localStorage.setItem('player2', player);
+          localStorage.setItem('away_pitcher', player);
       }
 
+      // --- Populate player dropdown for selected team ---
+      function updatePlayerDropdown(dropdownId, team, callback) {
+        if (players.length === 0) return; // wait until CSV loads
 
-      function toggleDropdown(dropdownId) {
-        document.getElementById(dropdownId).classList.toggle('show');
-      }
+        // Filter players by TeamName
+        const playerList = players
+            .filter(p => p.TeamName === team)
+            .map(p => p.PlayerName);
 
-      window.onclick = function(event) {
-        if (!event.target.matches('.dropbtn') && !event.target.closest('.dropdown')) {
-          document.querySelectorAll(".dropdown-content").forEach(el => el.classList.remove("show"));
+        if (playerList.length === 0) {
+            playerList.push("No players found");
         }
+
+        populateDropdown(dropdownId, playerList, player => callback(team, player));
       }
 
+
+      // --- Dropdown toggle ---
+      function toggleDropdown(dropdownId) {
+        const el = document.getElementById(dropdownId).classList.toggle("show");
+      }
+
+      // Close dropdowns when clicking outside
+      window.onclick = function(event) {
+          if (!event.target.matches('.dropbtn') && !event.target.closest('.dropdown')) {
+              document.querySelectorAll(".dropdown-content").forEach(el => el.classList.remove("show"));
+          }
+      };
+
+      // --- Slider ---
       var slider = document.getElementById("range2");
       var output = document.getElementById("demo");
       output.innerHTML = slider.value;
-      
+
       slider.oninput = function() {
-        output.innerHTML = this.value;
+          output.innerHTML = this.value;
       }
     </script>
+
   </body>
 </html>

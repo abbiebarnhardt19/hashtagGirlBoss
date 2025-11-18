@@ -436,8 +436,8 @@ CORS(app)  # This allows your HTML page to call the API
 
 # Load your data when the server starts
 print("Loading data...")
-pitcher_data = pd.read_csv('/Users/abigailbarnhardt/Desktop/Trendy Headaches/hashtagGirlBoss/Data/API Output-Pitchers.csv')
-batter_data = pd.read_csv('/Users/abigailbarnhardt/Desktop/Trendy Headaches/hashtagGirlBoss/Data/API Output-Batters.csv')
+pitcher_data = pd.read_csv('/Users/kspen/DataStructures/hashtagGirlBoss/Data/API Output-Pitchers.csv')
+batter_data = pd.read_csv('/Users/kspen/DataStructures/hashtagGirlBoss/Data/API Output-Batters.csv')
 simulator = BaseballGameSimulator(pitcher_data, batter_data)
 print("Data loaded successfully!")
 
