@@ -3,6 +3,26 @@
   <head>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+      /* Minimal dropdown styles to ensure dropdowns are visible and clickable */
+      .dropdown { position: relative; display: inline-block; }
+      .dropbtn { cursor: pointer; }
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        left: 0;
+        top: calc(100% + 4px);
+        background: #fff;
+        min-width: 160px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        z-index: 1000;
+        pointer-events: auto;
+        box-sizing: border-box;
+      }
+      .dropdown-content.show { display: block; }
+      .dropdown-content button { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 8px 12px; cursor: pointer; }
+      .dropdown-content button:hover { background: #f1f1f1; }
+    </style>
   </head>
 
   <body style="background-color:#010613">
@@ -18,6 +38,8 @@
       <a class="active" href="gambling.html">Gambling</a>
       <a href="warning.html">Warning</a>
     </div>
+
+    <div id="dataStatus" style="color: #fff; padding: 8px 16px; font-size: 14px;"></div>
 
     <div class="gamblingslider" style="color: white;">
       <label for="range2" class="form-label">0</label>
@@ -86,135 +108,378 @@
       
     </div>
           <div class="" style="justify-self: center; padding-top: 150px;">
-              <a  href="simulation.html">
-                <button onclick="" class="simbtn">
-                Run Simulation
-              </button></a>
+              <div style="display:flex; gap:12px; align-items:flex-start; justify-content:center;">
+                <div style="text-align:left; color:#fff; width:420px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;"><div id="team1-lineup-title"><strong>Team 1 Lineup</strong></div><div style="font-size:12px;color:#ccc;">Drag batters from roster into lineup</div></div>
+                  <div id="team1-lineup" class="lineup" style="min-height:120px; background:#071227; padding:8px; border-radius:6px; margin-top:6px; display:flex; flex-direction:column; gap:6px;"></div>
+                  <div style="margin-top:6px; display:flex; gap:8px; align-items:center;"><button type="button" onclick="clearLineup(1)">Clear</button></div>
+                  <div style="margin-top:8px;"><strong>Available Batters</strong></div>
+                  <div id="team1-roster" class="roster" style="min-height:120px; background:#0b1a2a; padding:8px; border-radius:6px; margin-top:6px; overflow:auto; max-height:220px;"></div>
+                </div>
+
+                <div style="text-align:left; color:#fff; width:420px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;"><div id="team2-lineup-title"><strong>Team 2 Lineup</strong></div><div style="font-size:12px;color:#ccc;">Drag batters from roster into lineup</div></div>
+                  <div id="team2-lineup" class="lineup" style="min-height:120px; background:#071227; padding:8px; border-radius:6px; margin-top:6px; display:flex; flex-direction:column; gap:6px;"></div>
+                  <div style="margin-top:6px; display:flex; gap:8px; align-items:center;"><button type="button" onclick="clearLineup(2)">Clear</button></div>
+                  <div style="margin-top:8px;"><strong>Available Batters</strong></div>
+                  <div id="team2-roster" class="roster" style="min-height:120px; background:#0b1a2a; padding:8px; border-radius:6px; margin-top:6px; overflow:auto; max-height:220px;"></div>
+                </div>
+              </div>
+
+              <div style="margin-top:12px; text-align:center;">
+                <button id="gotoSim" type="button" class="simbtn" onclick="saveAndGo()">Run Simulation</button>
+              </div>
             </div>
           </div>
 
-    <script>
-      const teamOneButton = document.querySelector("button[onclick*='dropdownOne']");
-      const playerOneButton = document.querySelector("button[onclick*='dropdownThree']");
-      const teamTwoButton = document.querySelector("button[onclick*='dropdownTwo']");
-      const playerTwoButton = document.querySelector("button[onclick*='dropdownFour']");
+      <script>
+        const teamOneButton = document.querySelector("button[onclick*='dropdownOne']");
+        const playerOneButton = document.querySelector("button[onclick*='dropdownThree']");
+        const teamTwoButton = document.querySelector("button[onclick*='dropdownTwo']");
+        const playerTwoButton = document.querySelector("button[onclick*='dropdownFour']");
 
-      let players = []; // CSV data
-      let selectedTeamOne = null;
-      let selectedTeamTwo = null;
+        let pitchers = []; // CSV data (pitchers only)
+        let selectedTeamOne = null;
+        let selectedTeamTwo = null;
 
-      fetch('teams.json')
-        .then(res => res.json())
-        .then(data => {
-            const uniqueTeams = [...new Set(data.map(item => item.TeamName))];
-            populateDropdown('dropdownOne', uniqueTeams, team => {
-                selectedTeamOne = team;
-                selectTeamOne(team);
-            });
-            populateDropdown('dropdownTwo', uniqueTeams, team => {
-                selectedTeamTwo = team;
-                selectTeamTwo(team);
-            });
-        })
-        .catch(err => console.error('Error loading teams.json:', err));
+        /* -------------------------------
+          LOAD TEAMS
+        --------------------------------*/
+        fetch('teams.json')
+          .then(res => res.json())
+          .then(data => {
+              const uniqueTeams = [...new Set(data.map(item => item.TeamName))];
+              console.log('teams.json loaded — unique teams:', uniqueTeams.length);
 
-      Papa.parse("API Output-Pitchers.csv", {
+              populateDropdown('dropdownOne', uniqueTeams, (team) => {
+                  selectedTeamOne = team;
+                  selectTeamOne(team);
+              });
+
+              populateDropdown('dropdownTwo', uniqueTeams, (team) => {
+                  selectedTeamTwo = team;
+                  selectTeamTwo(team);
+              });
+          })
+          .catch(err => console.error('Error loading teams.json:', err));
+
+        /* -------------------------------
+          LOAD PITCHERS CSV
+        --------------------------------*/
+          Papa.parse("Data/API Output-Pitchers.csv", {
           download: true,
           header: true,
-          complete: function(results) {
-              players = results.data;
+          skipEmptyLines: true,  // IMPORTANT FIX
+            complete: function(results) {
+              console.log('Papa.parse complete — rows:', results.data.length);
 
-              if (selectedTeamOne) updatePlayerDropdown('dropdownThree', selectedTeamOne, selectPlayerOne);
-              if (selectedTeamTwo) updatePlayerDropdown('dropdownFour', selectedTeamTwo, selectPlayerTwo);
+              pitchers = results.data
+                .map(p => {
+                  if (p.TeamName) p.TeamName = p.TeamName.trim();
+                  if (p.PlayerName) p.PlayerName = p.PlayerName.trim();
+                  if (p.Position) p.Position = p.Position.trim();
+                  return p;
+                })
+                  .filter(p =>
+                      p.TeamName &&
+                      p.PlayerName &&
+                      p.TeamName !== "" &&
+                      p.PlayerName !== ""
+                  );
+
+                if (selectedTeamOne)
+                  updatePlayerDropdown('dropdownThree', selectedTeamOne, selectPlayerOne);
+                if (selectedTeamTwo)
+                  updatePlayerDropdown('dropdownFour', selectedTeamTwo, selectPlayerTwo);
+
+                console.log('pitchers processed:', pitchers.length, pitchers.slice(0,5));
           }
       });
 
-      function populateDropdown(dropdownId, items, callback) {
-        const container = document.getElementById(dropdownId);
-        container.innerHTML = ""; // clear previous content
-
-        items.forEach(item => {
-            const btn = document.createElement("button");
-            btn.textContent = item;
-            btn.onclick = () => {
-                callback(item);
-                container.classList.remove("show"); // close dropdown after selection
-            };
-            container.appendChild(btn);
+        // Load batters CSV for rosters
+        let batters = [];
+        Papa.parse("Data/API Output-Batters.csv", {
+          download: true,
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            batters = (results && results.data) ? results.data.map(r=>r) : [];
+            console.debug('Batters parsed:', batters.length);
+            document.getElementById('dataStatus').textContent = (document.getElementById('dataStatus').textContent || '') + ` | Batters: ${batters.length}`;
+            // render rosters for currently selected teams
+            try { renderAvailableBattersForTeam(localStorage.getItem('team1') || ''); renderAvailableBattersForTeam(localStorage.getItem('team2') || ''); } catch(e){}
+          },
+          error: function(err){ console.error('Failed to load batters CSV', err); document.getElementById('dataStatus').textContent += ' | Batters CSV load error'; }
         });
-      }
-      // --- Team selection ---
-      function selectTeamOne(team) {
-          document.getElementById('dropdownOne').classList.remove('show');
-          teamOneButton.innerHTML = `Team 1: ${team}`;
-          localStorage.setItem('team1', team);
 
-          updatePlayerDropdown('dropdownThree', team, selectPlayerOne);
-          playerOneButton.innerHTML = "Select Player";
-      }
 
-      function selectTeamTwo(team) {
-          document.getElementById('dropdownTwo').classList.remove('show');
-          teamTwoButton.innerHTML = `Team 2: ${team}`;
-          localStorage.setItem('team2', team);
+        /* -------------------------------
+          POPULATE ANY DROPDOWN
+        --------------------------------*/
+        function populateDropdown(dropdownId, items, callback) {
+          const container = document.getElementById(dropdownId);
+          container.innerHTML = "";
 
-          updatePlayerDropdown('dropdownFour', team, selectPlayerTwo);
-          playerTwoButton.innerHTML = "Select Player";
-      }
+          console.log('populateDropdown', dropdownId, 'itemsCount=', items.length);
 
-      // --- Player selection ---
-      function selectPlayerOne(team, player) {
-          document.getElementById('dropdownThree').classList.remove('show');
-          playerOneButton.innerHTML = `Player: ${player}`;
-          localStorage.setItem('player1', player);
-          localStorage.setItem('home_pitcher', player);
-      }
-
-      function selectPlayerTwo(team, player) {
-          document.getElementById('dropdownFour').classList.remove('show');
-          playerTwoButton.innerHTML = `Player: ${player}`;
-          localStorage.setItem('player2', player);
-          localStorage.setItem('away_pitcher', player);
-      }
-
-      // --- Populate player dropdown for selected team ---
-      function updatePlayerDropdown(dropdownId, team, callback) {
-        if (players.length === 0) return; // wait until CSV loads
-
-        // Filter players by TeamName
-        const playerList = players
-            .filter(p => p.TeamName === team)
-            .map(p => p.PlayerName);
-
-        if (playerList.length === 0) {
-            playerList.push("No players found");
+            items.forEach(item => {
+              const btn = document.createElement("button");
+              btn.type = 'button';
+              btn.textContent = item;
+              // stop propagation so the global window.onclick won't immediately close the dropdown
+              btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                callback(item);
+                container.classList.remove("show");
+              });
+              container.appendChild(btn);
+            });
         }
 
-        populateDropdown(dropdownId, playerList, player => callback(team, player));
-      }
+        /* -------------------------------
+          TEAM SELECTION
+        --------------------------------*/
+        function selectTeamOne(team) {
+            document.getElementById('dropdownOne').classList.remove('show');
+            teamOneButton.innerHTML = `Team 1: ${team}`;
+            localStorage.setItem('team1', team);
 
+            updatePlayerDropdown('dropdownThree', team, selectPlayerOne);
+          playerOneButton.innerHTML = "Select Player";
+          // render batters roster for this team
+          try { document.getElementById('team1-lineup-title').innerHTML = `<strong>${team} Lineup</strong>`; renderAvailableBattersForTeam(team); } catch(e){}
+        }
 
-      // --- Dropdown toggle ---
-      function toggleDropdown(dropdownId) {
-        const el = document.getElementById(dropdownId).classList.toggle("show");
-      }
+        function selectTeamTwo(team) {
+            document.getElementById('dropdownTwo').classList.remove('show');
+            teamTwoButton.innerHTML = `Team 2: ${team}`;
+            localStorage.setItem('team2', team);
 
-      // Close dropdowns when clicking outside
-      window.onclick = function(event) {
-          if (!event.target.matches('.dropbtn') && !event.target.closest('.dropdown')) {
-              document.querySelectorAll(".dropdown-content").forEach(el => el.classList.remove("show"));
+            updatePlayerDropdown('dropdownFour', team, selectPlayerTwo);
+          playerTwoButton.innerHTML = "Select Player";
+          // render batters roster for this team
+          try { document.getElementById('team2-lineup-title').innerHTML = `<strong>${team} Lineup</strong>`; renderAvailableBattersForTeam(team); } catch(e){}
+        }
+
+        /* -------------------------------
+          PLAYER SELECTION
+        --------------------------------*/
+        function selectPlayerOne(player) {
+            document.getElementById('dropdownThree').classList.remove('show');
+            playerOneButton.innerHTML = `Player: ${player}`;
+            localStorage.setItem('player1', player);
+            localStorage.setItem('home_pitcher', player);
+        }
+
+        function selectPlayerTwo(player) {
+            document.getElementById('dropdownFour').classList.remove('show');
+            playerTwoButton.innerHTML = `Player: ${player}`;
+            localStorage.setItem('player2', player);
+            localStorage.setItem('away_pitcher', player);
+        }
+
+        /* -------------------------------
+          POPULATE PLAYERS PER TEAM
+        --------------------------------*/
+        // Helper to detect whether a CSV row represents a pitcher.
+        // Checks common field names and values (e.g. 'P', 'Pitcher').
+        function isPitcher(row) {
+          if (!row) return false;
+          const keys = ['Position', 'Pos', 'position', 'pos', 'role', 'Role'];
+          for (const k of keys) {
+            if (row[k]) {
+              const v = String(row[k]).toLowerCase();
+              if (v === 'p' || v === 'pitcher' || v.includes('pitch')) return true;
+            }
           }
-      };
+          // fallback: check PlayerName or other hints (some CSVs tag pitchers differently)
+          return false;
+        }
+        function updatePlayerDropdown(dropdownId, team, callback) {
+          if (pitchers.length === 0) {
+              // If CSV hasn't loaded yet, show a helpful message instead of leaving the menu blank
+              populateDropdown(dropdownId, ["Pitchers not loaded yet"], () => {});
+              console.warn('updatePlayerDropdown: pitchers array empty — CSV may not have loaded yet');
+              return;
+          }
 
-      // --- Slider ---
-      var slider = document.getElementById("range2");
-      var output = document.getElementById("demo");
-      output.innerHTML = slider.value;
+          const pitcherList = pitchers
+            .filter(p => p.TeamName && p.TeamName.trim() === team.trim() && isPitcher(p))
+            .map(p => p.PlayerName.trim());
 
-      slider.oninput = function() {
-          output.innerHTML = this.value;
-      }
-    </script>
+          if (pitcherList.length === 0) {
+              pitcherList.push("No pitchers found");
+          }
+
+          populateDropdown(dropdownId, pitcherList, callback);
+        }
+
+        // Render available batters for the currently selected teams into the roster boxes
+        function renderAvailableBattersForTeam(team) {
+          const t1 = localStorage.getItem('team1') || '';
+          const t2 = localStorage.getItem('team2') || '';
+          const roster1 = document.getElementById('team1-roster');
+          const roster2 = document.getElementById('team2-roster');
+          if (roster1) roster1.innerHTML = '';
+          if (roster2) roster2.innerHTML = '';
+
+          try {
+            const list1 = batters.filter(b => ((b.TeamName||b.Team||'')+'').trim() === t1.trim());
+            const list2 = batters.filter(b => ((b.TeamName||b.Team||'')+'').trim() === t2.trim());
+            const cur1 = getLineup(1);
+            const cur2 = getLineup(2);
+
+            if (roster1) list1.forEach(b => {
+              const name = (b.PlayerName||b.Player||b.Name||'').trim();
+              if (!name || cur1.includes(name)) return;
+              const d = document.createElement('div');
+              d.textContent = name;
+              d.draggable = true;
+              d.style.padding = '6px 8px'; d.style.borderRadius='6px'; d.style.marginBottom='6px'; d.style.background='#123041'; d.style.cursor='grab';
+              d.addEventListener('dragstart', function(e){ e.dataTransfer.setData('text/plain', JSON.stringify({name:name,from:'roster',team:1})); });
+              roster1.appendChild(d);
+            });
+
+            if (roster2) list2.forEach(b => {
+              const name = (b.PlayerName||b.Player||b.Name||'').trim();
+              if (!name || cur2.includes(name)) return;
+              const d = document.createElement('div');
+              d.textContent = name;
+              d.draggable = true;
+              d.style.padding = '6px 8px'; d.style.borderRadius='6px'; d.style.marginBottom='6px'; d.style.background='#123041'; d.style.cursor='grab';
+              d.addEventListener('dragstart', function(e){ e.dataTransfer.setData('text/plain', JSON.stringify({name:name,from:'roster',team:2})); });
+              roster2.appendChild(d);
+            });
+
+            // attach drop handlers to lineup containers (once)
+            const l1 = document.getElementById('team1-lineup');
+            const l2 = document.getElementById('team2-lineup');
+            if (l1 && !l1._dragBound) {
+              l1.addEventListener('dragover', e=>e.preventDefault());
+              l1.addEventListener('drop', function(e){ e.preventDefault(); try{ const payload = JSON.parse(e.dataTransfer.getData('text/plain')); if (payload && payload.name){ const arr=getLineup(1); if (arr.length>=MAX_LINEUP) return alert('Lineup full (9)'); arr.push(payload.name); saveLineup(1,arr); renderLineup(1); renderAvailableBattersForTeam(1); } }catch(ex){} });
+              l1._dragBound = true;
+            }
+            if (l2 && !l2._dragBound) {
+              l2.addEventListener('dragover', e=>e.preventDefault());
+              l2.addEventListener('drop', function(e){ e.preventDefault(); try{ const payload = JSON.parse(e.dataTransfer.getData('text/plain')); if (payload && payload.name){ const arr=getLineup(2); if (arr.length>=MAX_LINEUP) return alert('Lineup full (9)'); arr.push(payload.name); saveLineup(2,arr); renderLineup(2); renderAvailableBattersForTeam(2); } }catch(ex){} });
+              l2._dragBound = true;
+            }
+
+          } catch (ex) { console.error(ex); }
+        }
+
+        /* -------------------------------
+          OPEN/CLOSE DROPDOWNS
+        --------------------------------*/
+        function toggleDropdown(id) {
+          document.getElementById(id).classList.toggle("show");
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.dropbtn') && !event.target.closest('.dropdown')) {
+                document.querySelectorAll(".dropdown-content").forEach(el => el.classList.remove("show"));
+            }
+        };
+
+        /* -------------------------------
+          SLIDER
+        --------------------------------*/
+        // Lineup management: simple client-side lists (max 9 batters per team)
+        const MAX_LINEUP = 9;
+        function getLineup(teamNumber) {
+          const key = teamNumber === 1 ? 'home_lineup' : 'away_lineup';
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : [];
+        }
+
+        function saveLineup(teamNumber, arr) {
+          const key = teamNumber === 1 ? 'home_lineup' : 'away_lineup';
+          localStorage.setItem(key, JSON.stringify(arr));
+        }
+
+        function renderLineup(teamNumber) {
+          const container = document.getElementById(`team${teamNumber}-lineup`);
+          const arr = getLineup(teamNumber);
+          container.innerHTML = '';
+          arr.forEach((name, i) => {
+            const el = document.createElement('div');
+            el.style.display = 'flex';
+            el.style.justifyContent = 'space-between';
+            el.style.padding = '6px';
+            el.style.marginBottom = '4px';
+            el.style.background = '#0f2436';
+            el.style.borderRadius = '4px';
+            el.innerHTML = `<span>${i+1}. ${name}</span>`;
+            const rem = document.createElement('button');
+            rem.type = 'button';
+            rem.textContent = '✕';
+            rem.style.marginLeft = '8px';
+            rem.onclick = () => { arr.splice(i,1); saveLineup(teamNumber, arr); renderLineup(teamNumber); try{ renderAvailableBattersForTeam(localStorage.getItem('team1')||''); renderAvailableBattersForTeam(localStorage.getItem('team2')||''); }catch(e){} };
+            el.appendChild(rem);
+            container.appendChild(el);
+          });
+          const hint = document.createElement('div');
+          hint.style.fontSize = '12px';
+          hint.style.color = '#ccc';
+          hint.textContent = `(${arr.length}/${MAX_LINEUP})`;
+          container.appendChild(hint);
+        }
+
+        function addBatter(teamNumber) {
+          const input = document.getElementById(`team${teamNumber}-batter-input`);
+          const name = (input.value || '').trim();
+          if (!name) return alert('Enter batter name');
+          const arr = getLineup(teamNumber);
+          if (arr.length >= MAX_LINEUP) return alert('Lineup full (9)');
+          arr.push(name);
+          saveLineup(teamNumber, arr);
+          input.value = '';
+          renderLineup(teamNumber);
+        }
+
+        function clearLineup(teamNumber) {
+          if (!confirm('Clear lineup?')) return;
+          saveLineup(teamNumber, []);
+          renderLineup(teamNumber);
+          // refresh available batters roster for both teams (so cleared players reappear)
+          try{ renderAvailableBattersForTeam(localStorage.getItem('team1') || ''); renderAvailableBattersForTeam(localStorage.getItem('team2') || ''); }catch(e){}
+        }
+
+        // Save pitcher/team selections (already saved by selection handlers) and ensure there are 9 batters each
+        function saveAndGo() {
+          const home = getLineup(1);
+          const away = getLineup(2);
+          if (home.length !== MAX_LINEUP || away.length !== MAX_LINEUP) {
+            if (!confirm('Each team should have 9 batters. Continue anyway?')) return;
+          }
+          // ensure teams and pitchers are saved (team selection handlers already set them)
+          // navigate to simulation page
+          window.location.href = 'simulation.html';
+        }
+
+        // render any previously-saved lineups
+        renderLineup(1);
+        renderLineup(2);
+
+        // set lineup titles from stored team names (if present)
+        try{
+          const t1 = localStorage.getItem('team1') || 'Team 1';
+          const t2 = localStorage.getItem('team2') || 'Team 2';
+          const el1 = document.getElementById('team1-lineup-title');
+          const el2 = document.getElementById('team2-lineup-title');
+          if (el1) el1.innerHTML = `<strong>${t1} Lineup</strong>`;
+          if (el2) el2.innerHTML = `<strong>${t2} Lineup</strong>`;
+        }catch(e){}
+
+        var slider = document.getElementById("range2");
+        var output = document.getElementById("demo");
+        output.innerHTML = slider.value;
+
+        slider.oninput = function() {
+            output.innerHTML = this.value;
+        }
+      </script>
+
 
   </body>
 </html>

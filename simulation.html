@@ -5,6 +5,7 @@
   <title>Simulation</title>
 
   <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css">
 
   <style>
@@ -88,7 +89,11 @@
       </div>
     </div>
 
-    <button onclick="runSim()" style="color:#000000;margin-top:20px;width:100%;padding:14px;border-radius:8px;font-size:16px;">Run Simulation</button>
+    <div style="margin-top:12px; display:flex; gap:12px; align-items:center; justify-content:center;">
+      <div style="color:#fff; font-size:13px;">Simulation runs locally using CSV data. Click to run.</div>
+    </div>
+
+    <button onclick="runSim()" id="runSimBtn" style="color:#000000;margin-top:20px;width:100%;padding:14px;border-radius:8px;font-size:16px;">Run Simulation</button>
 
   </div>
 </div>
@@ -97,51 +102,180 @@
 const API_URL = "http://localhost:5001";
 
 /* --------------------------------------------------
-   Fill TEAM GRIDS dynamically (example players)
-   Replace with your selection system
+   Load lineups and pitchers from localStorage
+   Users select teams & players on gambling.html which saves:
+   - 'home_lineup' (JSON array of 9 batters)
+   - 'away_lineup' (JSON array of 9 batters)
+   - 'home_pitcher' (string)
+   - 'away_pitcher' (string)
+   This code falls back to example players if none found.
 -------------------------------------------------- */
-const team1 = ["Player A1","Player A2","Player A3","Player A4","Player A5","Player A6","Player A7","Player A8","Player A9"];
-const team2 = ["Player B1","Player B2","Player B3","Player B4","Player B5","Player B6","Player B7","Player B8","Player B9"];
+function getStoredArray(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    return fallback;
+  } catch (e) { return fallback; }
+}
+
+const team1 = getStoredArray('home_lineup', ["Player A1","Player A2","Player A3","Player A4","Player A5","Player A6","Player A7","Player A8","Player A9"]);
+const team2 = getStoredArray('away_lineup', ["Player B1","Player B2","Player B3","Player B4","Player B5","Player B6","Player B7","Player B8","Player B9"]);
+const home_pitcher = localStorage.getItem('home_pitcher') || 'Unknown';
+const away_pitcher = localStorage.getItem('away_pitcher') || 'Unknown';
+const team1Name = localStorage.getItem('team1') || 'Team 1';
+const team2Name = localStorage.getItem('team2') || 'Team 2';
 
 function populateTeams() {
-    const t1 = document.getElementById("team1-players");
-    const t2 = document.getElementById("team2-players");
-    t1.innerHTML = "";
-    t2.innerHTML = "";
-    team1.forEach(p => t1.innerHTML += `<div class="griditem">${p}</div>`);
-    team2.forEach(p => t2.innerHTML += `<div class="griditem">${p}</div>`);
+  const t1 = document.getElementById("team1-players");
+  const t2 = document.getElementById("team2-players");
+  t1.innerHTML = "";
+  t2.innerHTML = "";
+  team1.forEach((p, i) => t1.innerHTML += `<div class="griditem${''}">${p}${i===0? '':''}</div>`);
+  team2.forEach((p, i) => t2.innerHTML += `<div class="griditem${''}">${p}${i===0? '':''}</div>`);
+
+  // show selected pitchers and real team names in the team title area
+  const t1title = document.getElementById('team1-title');
+  const t2title = document.getElementById('team2-title');
+  if (t1title) t1title.textContent = `${team1Name} — Pitcher: ${home_pitcher}`;
+  if (t2title) t2title.textContent = `${team2Name} — Pitcher: ${away_pitcher}`;
 }
 
 populateTeams();
 
+// Load CSV data (batters & pitchers) for client-side simulation
+let battersData = [];
+let pitchersData = [];
+document.getElementById('runSimBtn').disabled = true;
+function tryEnableRun() {
+  if (battersData.length > 0 && pitchersData.length > 0) document.getElementById('runSimBtn').disabled = false;
+}
+
+Papa.parse('Data/API Output-Batters.csv', { download: true, header: true, skipEmptyLines: true,
+  complete: function(res){ battersData = res.data || []; console.debug('Loaded batters:', battersData.length); tryEnableRun(); },
+  error: function(e){ console.error('Batters load error', e); }
+});
+
+Papa.parse('Data/API Output-Pitchers.csv', { download: true, header: true, skipEmptyLines: true,
+  complete: function(res){ pitchersData = res.data || []; console.debug('Loaded pitchers:', pitchersData.length); tryEnableRun(); },
+  error: function(e){ console.error('Pitchers load error', e); }
+});
+
+function findPlayerRecord(name, list) {
+  if (!name || !list) return null;
+  const exact = list.find(r => ((r.PlayerName||r.Player||r.Name||'')+'').trim() === name.trim());
+  if (exact) return exact;
+  // try case-insensitive partial match
+  const lower = name.toLowerCase();
+  return list.find(r => ((r.PlayerName||r.Player||r.Name||'')+'').toLowerCase().includes(lower));
+}
+
+function parseNumberFromKeys(obj, keys){
+  for (const k of keys){ if (obj[k] !== undefined && obj[k] !== ''){ const v = parseFloat(String(obj[k]).replace(/[^0-9\.\-]/g,'')); if (!isNaN(v)) return v; } }
+  return null;
+}
+
+function offenseScoreForBatter(rec){
+  if (!rec) return 0.2;
+  // look for OPS, OBP, SLG, AVG
+  const ops = parseNumberFromKeys(rec, ['OPS','ops','OpS','oPS']);
+  if (ops) return ops;
+  const obp = parseNumberFromKeys(rec, ['OBP','obp']);
+  const slg = parseNumberFromKeys(rec, ['SLG','slg']);
+  if (obp !== null && slg !== null) return obp + slg;
+  const avg = parseNumberFromKeys(rec, ['AVG','avg','BA','ba']);
+  if (avg) return avg * 3; // scale
+  return 0.5; // fallback
+}
+
+function defenseFactorForPitcher(rec){
+  if (!rec) return 1.0;
+  const era = parseNumberFromKeys(rec, ['ERA','era']);
+  if (era) return 1 / (1 + (era/4)); // lower era -> higher defense (closer to 1)
+  return 0.9;
+}
+
+function samplePoisson(lambda){
+  if (lambda <= 0) return 0;
+  const L = Math.exp(-lambda);
+  let k = 0; let p = 1;
+  while (p > L){ k++; p *= Math.random(); }
+  return k-1;
+}
+
+
 async function runSim() {
-    document.getElementById("winPct").textContent = "Loading...";
-    document.getElementById("predScores").textContent = "Loading...";
-    document.getElementById("top5").textContent = "Loading...";
+    document.getElementById("winPct").textContent = "Running...";
+    document.getElementById("predScores").textContent = "Running...";
+    document.getElementById("top5").textContent = "Running...";
     document.getElementById("percentDisplay").textContent = "--%";
 
-    const payload = {
-        away_lineup: team1,
-        home_lineup: team2,
-        away_pitcher: localStorage.getItem("away_pitcher"),
-        home_pitcher: localStorage.getItem("home_pitcher"),
-        n_simulations: 500
+    // require CSVs to be loaded
+    if (battersData.length === 0 || pitchersData.length === 0){
+      alert('CSV data not loaded yet. Please wait a moment and try again.');
+      return;
+    }
+
+    const nSims = 500;
+    // map lineup names to records
+    const homeRecords = team2.map(name => findPlayerRecord(name, battersData));
+    const awayRecords = team1.map(name => findPlayerRecord(name, battersData));
+    const homePitchRec = findPlayerRecord(home_pitcher, pitchersData);
+    const awayPitchRec = findPlayerRecord(away_pitcher, pitchersData);
+
+    // compute offense scores
+    const homeScores = homeRecords.map(r => offenseScoreForBatter(r));
+    const awayScores = awayRecords.map(r => offenseScoreForBatter(r));
+    const homeSum = homeScores.reduce((a,b)=>a+b,0) || 1;
+    const awaySum = awayScores.reduce((a,b)=>a+b,0) || 1;
+
+    const homeDefense = defenseFactorForPitcher(homePitchRec);
+    const awayDefense = defenseFactorForPitcher(awayPitchRec);
+
+    // accumulate results
+    let homeWins = 0; let awayWins = 0; let totalHomeRuns = 0; let totalAwayRuns = 0; let totalK = 0;
+    const playerHitCounts = {};
+
+    for (let i=0;i<nSims;i++){
+      // expected runs: scale = 0.12 to get reasonable baseball scores
+      const expHome = homeSum * awayDefense * 0.12;
+      const expAway = awaySum * homeDefense * 0.12;
+      const homeRuns = samplePoisson(expHome);
+      const awayRuns = samplePoisson(expAway);
+      totalHomeRuns += homeRuns; totalAwayRuns += awayRuns;
+      if (homeRuns > awayRuns) homeWins++; else if (awayRuns > homeRuns) awayWins++;
+
+      // distribute hits among batters proportional to offense score
+      for (let j=0;j<team2.length;j++){
+        const name = team2[j];
+        const portion = (homeScores[j]||0) / homeSum;
+        const expectedHits = (homeRuns) * portion;
+        playerHitCounts[name] = (playerHitCounts[name]||0) + expectedHits;
+      }
+      for (let j=0;j<team1.length;j++){
+        const name = team1[j];
+        const portion = (awayScores[j]||0) / awaySum;
+        const expectedHits = (awayRuns) * portion;
+        playerHitCounts[name] = (playerHitCounts[name]||0) + expectedHits;
+      }
+
+      // approximate strikeouts using pitcher K9 when available
+      const kHome = parseNumberFromKeys(homePitchRec||{}, ['K9','k9','Ks','K']) || 6;
+      const kAway = parseNumberFromKeys(awayPitchRec||{}, ['K9','k9','Ks','K']) || 6;
+      totalK += (kHome + kAway) * 0.5; // rough per-game proxy
+    }
+
+    const result = {
+      home_win_pct: homeWins / nSims,
+      away_win_pct: awayWins / nSims,
+      avg_home_score: totalHomeRuns / nSims,
+      avg_away_score: totalAwayRuns / nSims,
+      avg_total_strikeouts: totalK / nSims,
+      player_hit_frequency: playerHitCounts
     };
 
-    try {
-        const r = await fetch(`${API_URL}/simulate`, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(payload)
-        });
-
-        const data = await r.json();
-        updateUI(data);
-
-    } catch (err) {
-        console.log("Error:", err);
-        document.getElementById("winPct").textContent = "Error";
-    }
+    updateUI(result);
 }
 
 function updateUI(d) {
