@@ -204,79 +204,53 @@ function samplePoisson(lambda){
   return k-1;
 }
 
-
 async function runSim() {
     document.getElementById("winPct").textContent = "Running...";
     document.getElementById("predScores").textContent = "Running...";
     document.getElementById("top5").textContent = "Running...";
     document.getElementById("percentDisplay").textContent = "--%";
 
-    // require CSVs to be loaded
-    if (battersData.length === 0 || pitchersData.length === 0){
-      alert('CSV data not loaded yet. Please wait a moment and try again.');
-      return;
-    }
-
-    const nSims = 500;
-    // map lineup names to records
-    const homeRecords = team2.map(name => findPlayerRecord(name, battersData));
-    const awayRecords = team1.map(name => findPlayerRecord(name, battersData));
-    const homePitchRec = findPlayerRecord(home_pitcher, pitchersData);
-    const awayPitchRec = findPlayerRecord(away_pitcher, pitchersData);
-
-    // compute offense scores
-    const homeScores = homeRecords.map(r => offenseScoreForBatter(r));
-    const awayScores = awayRecords.map(r => offenseScoreForBatter(r));
-    const homeSum = homeScores.reduce((a,b)=>a+b,0) || 1;
-    const awaySum = awayScores.reduce((a,b)=>a+b,0) || 1;
-
-    const homeDefense = defenseFactorForPitcher(homePitchRec);
-    const awayDefense = defenseFactorForPitcher(awayPitchRec);
-
-    // accumulate results
-    let homeWins = 0; let awayWins = 0; let totalHomeRuns = 0; let totalAwayRuns = 0; let totalK = 0;
-    const playerHitCounts = {};
-
-    for (let i=0;i<nSims;i++){
-      // expected runs: scale = 0.12 to get reasonable baseball scores
-      const expHome = homeSum * awayDefense * 0.12;
-      const expAway = awaySum * homeDefense * 0.12;
-      const homeRuns = samplePoisson(expHome);
-      const awayRuns = samplePoisson(expAway);
-      totalHomeRuns += homeRuns; totalAwayRuns += awayRuns;
-      if (homeRuns > awayRuns) homeWins++; else if (awayRuns > homeRuns) awayWins++;
-
-      // distribute hits among batters proportional to offense score
-      for (let j=0;j<team2.length;j++){
-        const name = team2[j];
-        const portion = (homeScores[j]||0) / homeSum;
-        const expectedHits = (homeRuns) * portion;
-        playerHitCounts[name] = (playerHitCounts[name]||0) + expectedHits;
-      }
-      for (let j=0;j<team1.length;j++){
-        const name = team1[j];
-        const portion = (awayScores[j]||0) / awaySum;
-        const expectedHits = (awayRuns) * portion;
-        playerHitCounts[name] = (playerHitCounts[name]||0) + expectedHits;
-      }
-
-      // approximate strikeouts using pitcher K9 when available
-      const kHome = parseNumberFromKeys(homePitchRec||{}, ['K9','k9','Ks','K']) || 6;
-      const kAway = parseNumberFromKeys(awayPitchRec||{}, ['K9','k9','Ks','K']) || 6;
-      totalK += (kHome + kAway) * 0.5; // rough per-game proxy
-    }
-
-    const result = {
-      home_win_pct: homeWins / nSims,
-      away_win_pct: awayWins / nSims,
-      avg_home_score: totalHomeRuns / nSims,
-      avg_away_score: totalAwayRuns / nSims,
-      avg_total_strikeouts: totalK / nSims,
-      player_hit_frequency: playerHitCounts
+    const payload = {
+        away_lineup: team1,          // your away list
+        away_pitcher: away_pitcher,  // selected pitcher
+        home_lineup: team2,          // your home list
+        home_pitcher: home_pitcher,
+        n_simulations: 500
     };
 
-    updateUI(result);
+    try {
+        const res = await fetch("http://127.0.0.1:5001/simulate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+            alert("Simulation error: " + data.error);
+            return;
+        }
+
+        // Update UI with results
+        document.getElementById("winPct").textContent =
+            `Home: ${(data.home_win_pct * 100).toFixed(1)}% — Away: ${(data.away_win_pct * 100).toFixed(1)}%`;
+
+        document.getElementById("predScores").textContent =
+            `Predicted Score: Home ${data.avg_home_score.toFixed(1)} — Away ${data.avg_away_score.toFixed(1)}`;
+
+        document.getElementById("top5").textContent =
+            JSON.stringify(data.player_hit_frequency, null, 2);
+
+        document.getElementById("percentDisplay").textContent =
+            `${(data.home_win_pct * 100).toFixed(1)}%`;
+
+    } catch (err) {
+        console.error(err);
+        alert("Network or server error.");
+    }
 }
+
 
 function updateUI(d) {
     const home = (d.home_win_pct * 100).toFixed(1);
