@@ -42,10 +42,10 @@
     <div id="dataStatus" style="color: #fff; padding: 8px 16px; font-size: 14px;"></div>
 
     <div class="gamblingslider" style="color: white;">
-      <label for="range2" class="form-label">0</label>
-      <input type="range" class="form-range" min="0" max="50" id="range2">
-      <label for="range2" class="form-label">50</label>
-      <p style="justify-self: center;">Value: <span id="demo"></span></p>
+      <label for="range2" class="form-label">1</label>
+      <input type="range" class="form-range" min="1" max="1000" id="range2">
+      <label for="range2" class="form-label">1000</label>
+      <p style="justify-self: center;">Simulations: <span id="demo"></span></p>
     </div>
 
     <div style="justify-self: center; display: grid; grid-template-columns: auto auto; gap: 2rem; " class="buttonsplit">
@@ -438,11 +438,16 @@
         }
 
         function clearLineup(teamNumber) {
-          if (!confirm('Clear lineup?')) return;
-          saveLineup(teamNumber, []);
-          renderLineup(teamNumber);
-          // refresh available batters roster for both teams (so cleared players reappear)
-          try{ renderAvailableBattersForTeam(localStorage.getItem('team1') || ''); renderAvailableBattersForTeam(localStorage.getItem('team2') || ''); }catch(e){}
+          // Immediately clear the stored lineup and re-render UI.
+          try {
+            const key = teamNumber === 1 ? 'home_lineup' : 'away_lineup';
+            // Ensure we store an empty array (avoid legacy non-JSON values)
+            localStorage.setItem(key, JSON.stringify([]));
+            saveLineup(teamNumber, []);
+            renderLineup(teamNumber);
+            // refresh available batters roster for both teams so cleared players reappear
+            try{ renderAvailableBattersForTeam(localStorage.getItem('team1') || ''); renderAvailableBattersForTeam(localStorage.getItem('team2') || ''); }catch(e){}
+          } catch (ex) { console.error('clearLineup error', ex); }
         }
 
         // Save pitcher/team selections (already saved by selection handlers) and ensure there are 9 batters each
@@ -453,7 +458,11 @@
             if (!confirm('Each team should have 9 batters. Continue anyway?')) return;
           }
           // ensure teams and pitchers are saved (team selection handlers already set them)
-          // navigate to simulation page
+          // Save slider value to localStorage and navigate to simulation page
+          try {
+            var sliderEl = document.getElementById('range2');
+            if (sliderEl) localStorage.setItem('num_simulations', sliderEl.value);
+          } catch (e) { /* ignore */ }
           window.location.href = 'simulation.html';
         }
 
@@ -473,10 +482,15 @@
 
         var slider = document.getElementById("range2");
         var output = document.getElementById("demo");
-        output.innerHTML = slider.value;
+        // initialize slider value from localStorage if present, otherwise default to 500
+        try {
+          var saved = parseInt(localStorage.getItem('num_simulations'), 10);
+          if (!isNaN(saved) && slider) slider.value = saved;
+          if (slider && output) output.innerHTML = slider.value;
+        } catch (e) { if (slider && output) output.innerHTML = slider.value; }
 
-        slider.oninput = function() {
-            output.innerHTML = this.value;
+        if (slider) slider.oninput = function() {
+            if (output) output.innerHTML = this.value;
         }
       </script>
 

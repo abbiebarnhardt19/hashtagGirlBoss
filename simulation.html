@@ -76,7 +76,7 @@
     <!-- OUTPUT BOXES -->
     <div class="results">
       <div class="result-box">
-        <h3>Win %</h3>
+        <h3>Win Percentages</h3>
         <pre id="winPct">--</pre>
       </div>
       <div class="result-box">
@@ -84,13 +84,13 @@
         <pre id="predScores">--</pre>
       </div>
       <div class="result-box">
-        <h3>Top 5 Hit %</h3>
+        <h3>Top 5 Hit Percentages</h3>
         <pre id="top5">--</pre>
       </div>
     </div>
 
     <div style="margin-top:12px; display:flex; gap:12px; align-items:center; justify-content:center;">
-      <div style="color:#fff; font-size:13px;">Simulation runs locally using CSV data. Click to run.</div>
+      <div id="simCountDisplay" style="color:#fff;font-size:13px;margin-left:12px;">Simulations: --</div>
     </div>
 
     <button onclick="runSim()" id="runSimBtn" style="color:#000000;margin-top:20px;width:100%;padding:14px;border-radius:8px;font-size:16px;">Run Simulation</button>
@@ -143,6 +143,16 @@ function populateTeams() {
 }
 
 populateTeams();
+
+// Show simulation count on initial page load (default to 500)
+(function(){
+  try{
+    let n = parseInt(localStorage.getItem('num_simulations'), 10);
+    if (isNaN(n) || n < 1) n = 500;
+    const el = document.getElementById('simCountDisplay');
+    if (el) el.textContent = `Simulations: ${n}`;
+  }catch(e){ /* ignore */ }
+})();
 
 // Load CSV data (batters & pitchers) for client-side simulation
 let battersData = [];
@@ -210,45 +220,189 @@ async function runSim() {
     document.getElementById("top5").textContent = "Running...";
     document.getElementById("percentDisplay").textContent = "--%";
 
-    const payload = {
-        away_lineup: team1,          // your away list
-        away_pitcher: away_pitcher,  // selected pitcher
-        home_lineup: team2,          // your home list
-        home_pitcher: home_pitcher,
-        n_simulations: 500
-    };
-
-    try {
-        const res = await fetch("http://127.0.0.1:5001/simulate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-
-        if (!data.success) {
-            alert("Simulation error: " + data.error);
-            return;
-        }
-
-        // Update UI with results
-        document.getElementById("winPct").textContent =
-            `Home: ${(data.home_win_pct * 100).toFixed(1)}% — Away: ${(data.away_win_pct * 100).toFixed(1)}%`;
-
-        document.getElementById("predScores").textContent =
-            `Predicted Score: Home ${data.avg_home_score.toFixed(1)} — Away ${data.avg_away_score.toFixed(1)}`;
-
-        document.getElementById("top5").textContent =
-            JSON.stringify(data.player_hit_frequency, null, 2);
-
-        document.getElementById("percentDisplay").textContent =
-            `${(data.home_win_pct * 100).toFixed(1)}%`;
-
-    } catch (err) {
-        console.error(err);
-        alert("Network or server error.");
+    // require CSVs to be loaded
+    if (battersData.length === 0 || pitchersData.length === 0){
+      alert('CSV data not loaded yet. Please wait a moment and try again.');
+      return;
     }
+
+    // Use number of simulations from localStorage (set by gambling page), default 500
+    let nSims = parseInt(localStorage.getItem('num_simulations'), 10);
+    if (isNaN(nSims) || nSims < 1) nSims = 500;
+    // Update visible counter
+    try { const el = document.getElementById('simCountDisplay'); if (el) el.textContent = `Simulations: ${nSims}`; } catch(e){}
+
+    // Helper functions to extract stats
+    function getPitcherStats(name) {
+      const rec = findPlayerRecord(name, pitchersData);
+      if (!rec) return null;
+      const bf = parseNumberFromKeys(rec, ['battersFaced','BF','bf']) || 1;
+      return {
+        k_rate: (parseNumberFromKeys(rec, ['strikeOuts','SO','K']) || 0) / bf,
+        bb_rate: (parseNumberFromKeys(rec, ['baseOnBalls','BB','Walks']) || 0) / bf,
+        hit_rate: (parseNumberFromKeys(rec, ['hits','H']) || 0) / bf,
+        hr_rate: (parseNumberFromKeys(rec, ['homeRuns','HR']) || 0) / bf,
+        double_rate: (parseNumberFromKeys(rec, ['doubles','2B']) || 0) / bf,
+        triple_rate: (parseNumberFromKeys(rec, ['triples','3B']) || 0) / bf
+      };
+    }
+
+    function getBatterStats(name) {
+      const rec = findPlayerRecord(name, battersData);
+      if (!rec) return null;
+      const pa = parseNumberFromKeys(rec, ['plateAppearances','PA']) || 1;
+      return {
+        k_rate: (parseNumberFromKeys(rec, ['strikeOuts','SO','K']) || 0) / pa,
+        bb_rate: (parseNumberFromKeys(rec, ['baseOnBalls','BB','Walks']) || 0) / pa,
+        hit_rate: (parseNumberFromKeys(rec, ['hits','H']) || 0) / pa,
+        hr_rate: (parseNumberFromKeys(rec, ['homeRuns','HR']) || 0) / pa,
+        double_rate: (parseNumberFromKeys(rec, ['doubles','2B']) || 0) / pa,
+        triple_rate: (parseNumberFromKeys(rec, ['triples','3B']) || 0) / pa
+      };
+    }
+
+    function simulatePlateAppearance(batterStats, pitcherStats) {
+      // Blend batter and pitcher stats (60% batter, 40% pitcher)
+      const k_prob = 0.6 * batterStats.k_rate + 0.4 * pitcherStats.k_rate;
+      const bb_prob = 0.6 * batterStats.bb_rate + 0.4 * pitcherStats.bb_rate;
+      const hr_prob = 0.6 * batterStats.hr_rate + 0.4 * pitcherStats.hr_rate;
+      const double_prob = 0.6 * batterStats.double_rate + 0.4 * pitcherStats.double_rate;
+      const triple_prob = 0.6 * batterStats.triple_rate + 0.4 * pitcherStats.triple_rate;
+      const single_prob = (0.6 * batterStats.hit_rate + 0.4 * pitcherStats.hit_rate) - (hr_prob + double_prob + triple_prob);
+      const single_prob_adj = Math.max(0, single_prob);
+      const total_prob = k_prob + bb_prob + hr_prob + double_prob + triple_prob + single_prob_adj;
+      const out_prob = Math.max(0, 1 - total_prob);
+
+      // Simulate outcome
+      const rand = Math.random();
+      let cumulative = 0;
+      cumulative += k_prob;
+      if (rand < cumulative) return ['K', 0];
+      cumulative += bb_prob;
+      if (rand < cumulative) return ['BB', 1];
+      cumulative += hr_prob;
+      if (rand < cumulative) return ['HR', 4];
+      cumulative += triple_prob;
+      if (rand < cumulative) return ['triple', 3];
+      cumulative += double_prob;
+      if (rand < cumulative) return ['double', 2];
+      cumulative += single_prob_adj;
+      if (rand < cumulative) return ['single', 1];
+      return ['out', 0];
+    }
+
+    // track per-player hits in the provided playerHits object (counts hits in this game)
+    function simulateHalfInning(lineup, pitcherName, batterIdx, playerHits) {
+      let outs = 0, runs = 0;
+      let bases = [false, false, false];
+      const pitcherStats = getPitcherStats(pitcherName);
+      while (outs < 3) {
+        const batterName = lineup[batterIdx];
+        const batterStats = getBatterStats(batterName);
+        if (!batterStats || !pitcherStats) { outs++; batterIdx = (batterIdx + 1) % lineup.length; continue; }
+        const [outcome, basesAdvanced] = simulatePlateAppearance(batterStats, pitcherStats);
+        if (outcome === 'K' || outcome === 'out') {
+          outs++;
+        } else if (outcome === 'BB') {
+          // Walk: advance runners if forced
+          if (bases[0] && bases[1] && bases[2]) { runs++; }
+          else if (bases[0] && bases[1]) { bases[2] = true; }
+          else if (bases[0]) { bases[1] = true; }
+          bases[0] = true;
+        } else if (outcome === 'HR') {
+          // HR counts as a hit for the batter
+          playerHits[batterName] = (playerHits[batterName] || 0) + 1;
+          runs += bases.filter(b => b).length + 1;
+          bases = [false, false, false];
+        } else if (outcome === 'single' || outcome === 'double' || outcome === 'triple') {
+          // Count hit for batter
+          playerHits[batterName] = (playerHits[batterName] || 0) + 1;
+          // Advance runners
+          for (let i = 2; i >= 0; i--) {
+            if (bases[i]) {
+              const newBase = i + basesAdvanced;
+              if (newBase >= 3) { runs++; bases[i] = false; }
+              else { bases[newBase] = true; bases[i] = false; }
+            }
+          }
+          bases[basesAdvanced - 1] = true;
+        }
+        batterIdx = (batterIdx + 1) % lineup.length;
+      }
+      return [runs, batterIdx];
+    }
+
+    // simulateGame now also returns per-player hit counts for that game
+    function simulateGame(awayLineup, awayPitcher, homeLineup, homePitcher) {
+      let gameState = { inning: 1, outs: 0, bases: [false, false, false], home_score: 0, away_score: 0 };
+      let awayBatterIdx = 0, homeBatterIdx = 0;
+      let inningScores = { away: [], home: [] };
+      // track hits this game per player
+      const playerHitsThisGame = {};
+
+      for (let inning = 1; inning <= 9; inning++) {
+        // Away bats
+        let [awayRuns, nextAwayIdx] = simulateHalfInning(awayLineup, homePitcher, awayBatterIdx, playerHitsThisGame);
+        gameState.away_score += awayRuns;
+        inningScores.away.push(awayRuns);
+        awayBatterIdx = nextAwayIdx;
+        // Home bats
+        if (inning === 9 && gameState.home_score > gameState.away_score) {
+          inningScores.home.push(0);
+          break;
+        }
+        let [homeRuns, nextHomeIdx] = simulateHalfInning(homeLineup, awayPitcher, homeBatterIdx, playerHitsThisGame);
+        gameState.home_score += homeRuns;
+        inningScores.home.push(homeRuns);
+        homeBatterIdx = nextHomeIdx;
+        if (inning >= 9 && gameState.home_score > gameState.away_score) break;
+      }
+      // Extra innings if tied
+      let extraInning = 10;
+      while (gameState.away_score === gameState.home_score && extraInning <= 15) {
+        let [awayRuns, nextAwayIdx] = simulateHalfInning(awayLineup, homePitcher, awayBatterIdx, playerHitsThisGame);
+        gameState.away_score += awayRuns;
+        inningScores.away.push(awayRuns);
+        awayBatterIdx = nextAwayIdx;
+        let [homeRuns, nextHomeIdx] = simulateHalfInning(homeLineup, awayPitcher, homeBatterIdx, playerHitsThisGame);
+        gameState.home_score += homeRuns;
+        inningScores.home.push(homeRuns);
+        homeBatterIdx = nextHomeIdx;
+        if (gameState.home_score > gameState.away_score) break;
+        extraInning++;
+      }
+      return {
+        away_score: gameState.away_score,
+        home_score: gameState.home_score,
+        winner: gameState.home_score > gameState.away_score ? 'home' : 'away',
+        inning_scores: inningScores,
+        player_hits: playerHitsThisGame
+      };
+    }
+
+    // Aggregate results (count games in which each player had >=1 hit)
+    let homeWins = 0, awayWins = 0, homeScores = [], awayScores = [], playerHitFrequency = {};
+    for (let sim = 0; sim < nSims; sim++) {
+      const game = simulateGame(team1, away_pitcher, team2, home_pitcher);
+      homeScores.push(game.home_score);
+      awayScores.push(game.away_score);
+      if (game.winner === 'home') homeWins++; else awayWins++;
+      // For each player who had any hits this game, increment their game-hit frequency
+      for (const [player, hits] of Object.entries(game.player_hits || {})) {
+        if ((hits || 0) > 0) playerHitFrequency[player] = (playerHitFrequency[player] || 0) + 1;
+      }
+    }
+
+    // Display results
+    updateUI({
+      home_win_pct: homeWins / nSims,
+      away_win_pct: awayWins / nSims,
+      avg_home_score: homeScores.reduce((a,b)=>a+b,0)/nSims,
+      avg_away_score: awayScores.reduce((a,b)=>a+b,0)/nSims,
+      avg_total_strikeouts: 0,
+      player_hit_frequency: playerHitFrequency,
+      n_sims: nSims
+    });
 }
 
 
@@ -259,19 +413,20 @@ function updateUI(d) {
     document.getElementById("percentDisplay").textContent = home + "%";
 
     document.getElementById("winPct").textContent =
-        `Home Win %: ${home}%\nAway Win %: ${away}%`;
+      `Home Win: ${home}%\nAway Win: ${away}%`;
 
     document.getElementById("predScores").textContent =
-        `Home Score: ${d.avg_home_score.toFixed(2)}\nAway Score: ${d.avg_away_score.toFixed(2)}\nStrikeouts: ${d.avg_total_strikeouts.toFixed(1)}`;
+      `Home Score: ${d.avg_home_score.toFixed(2)}\nAway Score: ${d.avg_away_score.toFixed(2)}`;
 
-    // Top 5 Hit %
+    // Top 5 Hit % — compute as (games-with-hits / n_sims) * 100
+    const nSims = d.n_sims || 1;
     const sorted = Object.entries(d.player_hit_frequency)
-        .sort((a,b) => b[1] - a[1])
-        .slice(0,5);
+      .sort((a,b) => b[1] - a[1])
+      .slice(0,5);
 
     let txt = "";
     for (const [player, freq] of sorted) {
-        txt += `${player}: ${(freq/10).toFixed(1)}%\n`;
+      txt += `${player}: ${((freq / nSims) * 100).toFixed(1)}%\n`;
     }
     document.getElementById("top5").textContent = txt;
 }
