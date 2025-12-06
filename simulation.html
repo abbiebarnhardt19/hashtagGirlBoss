@@ -13,8 +13,6 @@
     body { min-height: 100vh; background: black; overflow-x: hidden; transition: background-color 0.3s; }
     .topnav { background-color: #031D44; overflow: hidden; height: 80px; width: 100%; border-bottom: #ffffff 2px solid; color: inherit; }
     .topnav a { float: right; color: inherit; text-align: center; padding: 12px 16px; margin: 16px; text-decoration: none; border-radius: 20px; font-size: 17px; }
-    .topnav a:hover { background-color: #021532; color: inherit; }
-    .topnav a.active { background-color: white; color: black; }
     .disabled { pointer-events: none; opacity: 0.4; }
     .sim-container { display:flex; justify-content:center; margin-top:24px; }
     .simbox { width:100%; max-width:1100px; padding:18px; border-radius:10px; }
@@ -31,6 +29,23 @@
     .result-box { background:#071227; padding:12px; border-radius:8px; width:32%; min-height:80px; }
     .result-box h3 { margin:0 0 6px 0; font-size:14px; }
     .result-box pre { margin:0; white-space:pre-wrap; color:#e6eef8; font-size:13px; }
+
+    .topnav a:hover {
+      background-color: rgb(161, 161, 161) !important;
+      color: white !important;
+    }
+
+    .topnav a.active {
+      background-color: rgb(103, 103, 103) !important;
+      color: white !important;
+    }
+
+    #runSimBtn:hover {
+      cursor: pointer;
+    }
+
+    
+
   </style>
 </head>
 
@@ -550,6 +565,23 @@ const resultPres = document.querySelectorAll('.result-box pre');
 resultPres.forEach(el => {
   el.style.color = contrastColor(themeColors.container);
 });
+const topnavEl = document.querySelector('.topnav');
+if (topnavEl) {
+  topnavEl.style.backgroundColor = themeColors.accent;
+
+  const navTextColor = contrastColor(themeColors.accent);
+  topnavEl.style.color = navTextColor;
+
+  topnavEl.querySelectorAll('a').forEach(el => {
+    el.style.color = navTextColor;
+  });
+
+  const navTitle = topnavEl.querySelector('.nav-title');
+  if (navTitle) navTitle.style.color = navTextColor;
+}
+
+
+
 </script>
 
 </body>
