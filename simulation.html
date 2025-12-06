@@ -11,17 +11,17 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; color: #fff; font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; }
     body { min-height: 100vh; background: black; overflow-x: hidden; transition: background-color 0.3s; }
-    .topnav { background-color: #031D44; overflow: hidden; height: 80px; width: 100%; border-bottom: #ffffff 2px solid; }
-    .topnav a { float: right; color: white; text-align: center; padding: 12px 16px; margin: 16px; text-decoration: none; border-radius: 20px; font-size: 17px; }
-    .topnav a:hover { background-color: #021532; color: white; }
+    .topnav { background-color: #031D44; overflow: hidden; height: 80px; width: 100%; border-bottom: #ffffff 2px solid; color: inherit; }
+    .topnav a { float: right; color: inherit; text-align: center; padding: 12px 16px; margin: 16px; text-decoration: none; border-radius: 20px; font-size: 17px; }
+    .topnav a:hover { background-color: #021532; color: inherit; }
     .topnav a.active { background-color: white; color: black; }
     .disabled { pointer-events: none; opacity: 0.4; }
     .sim-container { display:flex; justify-content:center; margin-top:24px; }
     .simbox { width:100%; max-width:1100px; padding:18px; border-radius:10px; }
     .gridwrap { display:flex; gap:40px; justify-content:space-between; align-items:flex-start; }
     .gridcontainer { width:42%; background:#071227; padding:14px; border-radius:10px; box-shadow: 0 2px 8px rgba(0,0,0,0.6); }
-    .team-title { font-size:18px; margin-bottom:10px; font-weight:700; text-align:center; }
-    .griditem { padding:8px; margin:6px 0; background:#0f2436; border-radius:6px; text-align:center; }
+    .team-title { font-size:18px; margin-bottom:10px; font-weight:700; text-align:center; color: inherit; }
+    .griditem { padding:8px; margin:6px 0; background:#0f2436; border-radius:6px; text-align:center; color: #ffffff; }
     .griditem.selected { background:#ffd54f; color:#000; font-weight:700; }
     .sbox-container { margin-top:20px; display:flex; justify-content:center; gap:20px; align-items:center; }
     .sbox { display:flex; align-items:center; gap:12px; }
@@ -34,9 +34,10 @@
   </style>
 </head>
 
-<body id="mainBody">
+<body id="mainBody" style="background-color:#010613">
 
 <div class="topnav" style="padding-right: 25px">
+      <span class="nav-title" style="color:#fff; font-weight:700; font-size:28px; margin-right:12px; line-height:48px; padding-top:16px; display:inline-block; margin-left:40px;">MLB Simulation</span>
       <a href="home.html">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
           class="bi bi-house" viewBox="0 0 16 16">
@@ -65,13 +66,7 @@
       </div>
     </div>
 
-    <!-- WIN PERCENT CIRCLE -->
-    <div class="sbox-container">
-      <div class="sbox">
-        <div class="circle"></div>
-        <div class="sboxtext" id="percentDisplay">--%</div>
-      </div>
-    </div>
+
 
     <!-- OUTPUT BOXES -->
     <div class="results">
@@ -88,12 +83,16 @@
         <pre id="top5">--</pre>
       </div>
     </div>
+    <div id="percentDisplay" style="display:none"></div>
+
 
     <div style="margin-top:12px; display:flex; gap:12px; align-items:center; justify-content:center;">
       <div id="simCountDisplay" style="color:#fff;font-size:13px;margin-left:12px;">Simulations: --</div>
     </div>
 
-    <button onclick="runSim()" id="runSimBtn" style="color:#000000;margin-top:20px;width:100%;padding:14px;border-radius:8px;font-size:16px;">Run Simulation</button>
+    <button onclick="runSim()" id="runSimBtn"style="color:#000000;margin-top:20px;width:100%;padding:14px;border-radius:8px;font-size:16px;cursor:pointer;">
+      Run Simulation
+    </button>
 
   </div>
 </div>
@@ -432,7 +431,6 @@ function updateUI(d) {
 }
 
 // Apply saved color theme on page load
-//gridItem: '#0f2436' },
 const colorThemes = { 
             default: { bg: '#010613', accent: '#031D44', container: '#071227', gridItem: '#123041'},
             Athletics: { bg: '#003831', accent: '#a2aaad', container: '#EFB21E', gridItem: '#003831' },
@@ -471,10 +469,58 @@ const themeColors = colorThemes[savedTheme] || colorThemes.default;
 document.getElementById('mainBody').style.backgroundColor = themeColors.bg;
 const topnav = document.querySelector('.topnav');
 if (topnav) topnav.style.backgroundColor = themeColors.accent;
+
+// contrast helpers
+function hexToLuminance(hex) {
+  if (!hex) return 0;
+  hex = hex.replace('#','');
+  if (hex.length === 3) hex = hex.split('').map(h=>h+h).join('');
+  const r = parseInt(hex.substring(0,2),16)/255;
+  const g = parseInt(hex.substring(2,4),16)/255;
+  const b = parseInt(hex.substring(4,6),16)/255;
+  const a = [r,g,b].map(c => (c <= 0.03928) ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4));
+  return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2];
+}
+function contrastColor(hex) { return hexToLuminance(hex) > 0.5 ? '#000000' : '#ffffff'; }
+
+function pickDarkestThemeColor(t) {
+  const candidates = [];
+  for (const k of Object.keys(t)) {
+    if (k === 'bg') continue;
+    const v = t[k];
+    if (typeof v === 'string' && v.startsWith('#')) candidates.push(v);
+  }
+  if (candidates.length === 0) return contrastColor(t.bg);
+  candidates.sort((a,b) => hexToLuminance(a) - hexToLuminance(b));
+  return candidates[0];
+}
+function contrastRatio(hex1, hex2) {
+  const l1 = hexToLuminance(hex1);
+  const l2 = hexToLuminance(hex2);
+  const L1 = Math.max(l1, l2);
+  const L2 = Math.min(l1, l2);
+  return (L1 + 0.05) / (L2 + 0.05);
+}
+
+const darkest = pickDarkestThemeColor(themeColors);
+const chosenText = (contrastRatio(darkest, themeColors.bg) < 3) ? '#ffffff' : darkest;
+document.getElementById('mainBody').style.color = chosenText;
+
+// Apply smart contrast color to topnav (based on accent background)
+const navTextColor = contrastColor(themeColors.accent);
+if (topnav) {
+  topnav.style.color = navTextColor;
+  if(topnav){
+    topnav.style.color = navTextColor;
+  }
+  const navTitle = topnav.querySelector('.nav-title');
+  if (navTitle) navTitle.style.color = navTextColor;
+}
+
+// Skip massive DOM traversal - body color already set above
 const gridContainers = document.querySelectorAll('.gridcontainer');
 gridContainers.forEach(el => {
   el.style.backgroundColor = themeColors.container;
-  el.style.borderColor = themeColors.containerBorder;
 });
 const gridItems = document.querySelectorAll('.griditem');
 gridItems.forEach(el => {
@@ -483,6 +529,26 @@ gridItems.forEach(el => {
 const resultBoxes = document.querySelectorAll('.result-box');
 resultBoxes.forEach(el => {
   el.style.backgroundColor = themeColors.container;
+  // Apply smart text color based on container background
+  el.style.color = contrastColor(themeColors.container);
+});
+
+// Apply smart colors to team titles and result box headings
+const teamTitles = document.querySelectorAll('.team-title');
+teamTitles.forEach(el => {
+  el.style.color = contrastColor(themeColors.container);
+});
+
+// Apply smart color to result box headings
+const resultHeadings = document.querySelectorAll('.result-box h3');
+resultHeadings.forEach(el => {
+  el.style.color = contrastColor(themeColors.container);
+});
+
+// Apply smart color to result box content
+const resultPres = document.querySelectorAll('.result-box pre');
+resultPres.forEach(el => {
+  el.style.color = contrastColor(themeColors.container);
 });
 </script>
 

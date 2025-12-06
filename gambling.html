@@ -15,19 +15,22 @@
         top: calc(100% + 4px);
         background: #fff;
         min-width: 160px;
+        max-height: 200px;
+        overflow-y: auto;
         box-shadow: 0 8px 16px rgba(0,0,0,0.2);
         z-index: 1000;
         pointer-events: auto;
         box-sizing: border-box;
       }
       .dropdown-content.show { display: block; }
-      .dropdown-content button { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 8px 12px; cursor: pointer; }
-      .dropdown-content button:hover { background: #f1f1f1; }
+      .dropdown-content button { display: block; width: 100%; text-align: left; border: none; background: transparent; padding: 8px 12px; cursor: pointer; color: #000000; }
+      .dropdown-content button:hover { background: #f1f1f1; color: #000000; }
     </style>
   </head>
 
   <body id="mainBody" style="background-color:#010613">
     <div class="topnav" style="padding-right: 25px">
+      <span class="nav-title" style="color:#fff; font-weight:700; font-size:28px; margin-right:12px; line-height:48px; padding-top:16px; display:inline-block; margin-left:40px;">MLB Simulation</span>
       <a href="home.html">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
           class="bi bi-house" viewBox="0 0 16 16">
@@ -40,18 +43,18 @@
       <a href="warning.html">Warning</a>
     </div>
 
-    <div id="dataStatus" style="color: #fff; padding: 8px 16px; font-size: 14px;"></div>
+    <div id="dataStatus" style="color: #ffffff; padding: 8px 16px; font-size: 14px;"></div>
 
-    <div class="gamblingslider" style="color: white;">
+    <div class="gamblingslider" style="color: white; margin-top: -20px;">
       <label for="range2" class="form-label">1</label>
       <input type="range" class="form-range" min="1" max="1000" id="range2">
       <label for="range2" class="form-label">1000</label>
-      <p style="justify-self: center;">Simulations: <span id="demo"></span></p>
+      <p style="justify-self: center; color:#ffffff;">Simulations: <span id="demo" style="color:#ffffff;"></span></p>
     </div>
 
     <div style="justify-self: center; display: grid; grid-template-columns: auto auto; gap: 2rem; " class="buttonsplit">
       <!-- Left Column -->
-      <div style="display: grid; gap: 1rem; padding-top: 100px;">
+      <div style="display: grid; gap: 1rem; padding-top: 20px;">
         <!-- Team 1 -->
         <div class="dropdown" style="width: 40vw;">
           <button onclick="toggleDropdown('dropdownOne')" class="dropbtn">
@@ -66,9 +69,9 @@
         </div>
         
         <!-- Team 3 -->
-        <div class="dropdown" style="padding-top: 150px;">
+        <div class="dropdown" style="padding-top: 0px;">
           <button onclick="toggleDropdown('dropdownThree')" class="dropbtn">
-            Select Picther
+            Select Pitcher
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
               class="bi bi-caret-down" viewBox="0 0 16 16">
               <path
@@ -80,8 +83,8 @@
       </div>
 
       <!-- Right Column -->
-      <div style="display: grid; gap: 1rem;">
-        <div class="dropdown" style="align-self: start; padding-top: 100px;">
+      <div style="display: grid; gap: 1rem; padding-top: 20px;">
+        <div class="dropdown" style="padding-top: 0px;">
           <button onclick="toggleDropdown('dropdownTwo')" class="dropbtn">
             Select Team 2
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -93,7 +96,7 @@
           <div id="dropdownTwo" class="dropdown-content"></div>
         </div>
 
-        <div class="dropdown" style="padding-top: 150px;">
+        <div class="dropdown" style="padding-top: 0px;">
           <button onclick="toggleDropdown('dropdownFour')" class="dropbtn">
             Select Pitcher
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -108,27 +111,27 @@
 
       
     </div>
-          <div class="" style="justify-self: center; padding-top: 150px;">
+          <div class="" style="justify-self: center; padding-top: 32px;">
               <div style="display:flex; gap:12px; align-items:flex-start; justify-content:center;">
                 <div style="text-align:left; color:#fff; width:420px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center;"><div id="team1-lineup-title"><strong>Team 1 Lineup</strong></div><div style="font-size:12px;color:#fff;">Drag or click '+' to add batters</div></div>
+                  <div style="display:flex; justify-content:space-between; align-items:center;"><div id="team1-lineup-title" style="color:#ffffff;"><strong>Team 1 Lineup</strong></div><div style="font-size:12px;color:#ffffff;">Drag or click '+' to add batters</div></div>
                   <div id="team1-lineup" class="lineup" style="min-height:120px; background:#071227; padding:8px; border-radius:6px; margin-top:6px; display:flex; flex-direction:column; gap:6px;"></div>
                   <div style="margin-top:6px; display:flex; gap:8px; align-items:center;"><button type="button" onclick="clearLineup(1)">Clear</button></div>
-                  <div style="margin-top:8px;"><strong>Available Batters</strong></div>
-                  <div id="team1-roster" class="roster" style="min-height:120px; background:#0b1a2a; padding:8px; border-radius:6px; margin-top:6px; overflow:auto; max-height:220px;"></div>
+                  <div style="margin-top:8px; color:#ffffff;"><strong>Available Batters</strong></div>
+                  <div id="team1-roster" class="roster" style="min-height:200px; background:#0b1a2a; padding:8px; border-radius:6px; margin-top:6px; overflow:auto; max-height:264px;"></div>
                 </div>
 
                 <div style="text-align:left; color:#fff; width:420px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center;"><div id="team2-lineup-title"><strong>Team 2 Lineup</strong></div><div style="font-size:12px;color:#fff;">Drag or click '+' to add batters</div></div>
+                  <div style="display:flex; justify-content:space-between; align-items:center;"><div id="team2-lineup-title" style="color:#ffffff;"><strong>Team 2 Lineup</strong></div><div style="font-size:12px;color:#ffffff;">Drag or click '+' to add batters</div></div>
                   <div id="team2-lineup" class="lineup" style="min-height:120px; background:#071227; padding:8px; border-radius:6px; margin-top:6px; display:flex; flex-direction:column; gap:6px;"></div>
                   <div style="margin-top:6px; display:flex; gap:8px; align-items:center;"><button type="button" onclick="clearLineup(2)">Clear</button></div>
-                  <div style="margin-top:8px;"><strong>Available Batters</strong></div>
-                  <div id="team2-roster" class="roster" style="min-height:120px; background:#0b1a2a; padding:8px; border-radius:6px; margin-top:6px; overflow:auto; max-height:220px;"></div>
+                  <div style="margin-top:8px; color:#ffffff;"><strong>Available Batters</strong></div>
+                  <div id="team2-roster" class="roster" style="min-height:200px; background:#0b1a2a; padding:8px; border-radius:6px; margin-top:6px; overflow:auto; max-height:264px;"></div>
                 </div>
               </div>
 
               <div style="margin-top:12px; text-align:center;">
-                <button id="gotoSim" type="button" class="simbtn" onclick="saveAndGo()">Run Simulation</button>
+                <button id="gotoSim" type="button" class="simbtn" onclick="saveAndGo()" style="margin-top:20px;">Run Simulation</button>
               </div>
             </div>
           </div>
@@ -241,24 +244,34 @@
         --------------------------------*/
         function selectTeamOne(team) {
             document.getElementById('dropdownOne').classList.remove('show');
+            // if team changed, clear the saved lineup for team 1
+            const prevTeam1 = localStorage.getItem('team1');
+            if (prevTeam1 !== team) {
+              try { saveLineup(1, []); renderLineup(1); } catch(e){}
+            }
             teamOneButton.innerHTML = `Team 1: ${team}`;
             localStorage.setItem('team1', team);
 
             updatePlayerDropdown('dropdownThree', team, selectPlayerOne);
-          playerOneButton.innerHTML = "Select Pitcher";
-          // render batters roster for this team
-          try { document.getElementById('team1-lineup-title').innerHTML = `<strong>${team} Lineup</strong>`; renderAvailableBattersForTeam(team); } catch(e){}
+            playerOneButton.innerHTML = "Select Pitcher";
+            // render batters roster for this team
+            try { document.getElementById('team1-lineup-title').innerHTML = `<strong>${team} Lineup</strong>`; renderAvailableBattersForTeam(team); } catch(e){}
         }
 
         function selectTeamTwo(team) {
             document.getElementById('dropdownTwo').classList.remove('show');
+            // if team changed, clear the saved lineup for team 2
+            const prevTeam2 = localStorage.getItem('team2');
+            if (prevTeam2 !== team) {
+              try { saveLineup(2, []); renderLineup(2); } catch(e){}
+            }
             teamTwoButton.innerHTML = `Team 2: ${team}`;
             localStorage.setItem('team2', team);
 
             updatePlayerDropdown('dropdownFour', team, selectPlayerTwo);
-          playerTwoButton.innerHTML = "Select Pitcher";
-          // render batters roster for this team
-          try { document.getElementById('team2-lineup-title').innerHTML = `<strong>${team} Lineup</strong>`; renderAvailableBattersForTeam(team); } catch(e){}
+            playerTwoButton.innerHTML = "Select Pitcher";
+            // render batters roster for this team
+            try { document.getElementById('team2-lineup-title').innerHTML = `<strong>${team} Lineup</strong>`; renderAvailableBattersForTeam(team); } catch(e){}
         }
 
         /* -------------------------------
@@ -357,6 +370,14 @@
               addBtn.title = 'Add to lineup';
               addBtn.style.marginLeft = '8px';
               addBtn.style.flex = '0 0 auto';
+              addBtn.style.color = '#000000';
+              addBtn.style.background = '#ffffff';
+              addBtn.style.border = 'none';
+              addBtn.style.padding = '0 4px';
+              addBtn.style.cursor = 'pointer';
+              addBtn.style.fontSize = '16px';
+              addBtn.style.fontWeight = 'bold';
+              addBtn.style.lineHeight = '1';
               addBtn.onclick = function(e){
                 e.stopPropagation();
                 const arr = getLineup(1);
@@ -399,6 +420,14 @@
               addBtn.title = 'Add to lineup';
               addBtn.style.marginLeft = '8px';
               addBtn.style.flex = '0 0 auto';
+              addBtn.style.color = '#000000';
+              addBtn.style.background = '#ffffff';
+              addBtn.style.border = 'none';
+              addBtn.style.padding = '0 4px';
+              addBtn.style.cursor = 'pointer';
+              addBtn.style.fontSize = '16px';
+              addBtn.style.fontWeight = 'bold';
+              addBtn.style.lineHeight = '1';
               addBtn.onclick = function(e){
                 e.stopPropagation();
                 const arr = getLineup(2);
@@ -470,12 +499,21 @@
             el.style.padding = '6px';
             el.style.marginBottom = '4px';
             el.style.background = '#0f2436';
+            el.style.color = '#ffffff';
             el.style.borderRadius = '4px';
             el.innerHTML = `<span>${i+1}. ${name}</span>`;
             const rem = document.createElement('button');
             rem.type = 'button';
             rem.textContent = '✕';
             rem.style.marginLeft = '8px';
+            rem.style.background = '#ffffff';
+            rem.style.color = '#000000';
+            rem.style.border = 'none';
+            rem.style.padding = '0 4px';
+            rem.style.cursor = 'pointer';
+            rem.style.fontSize = '16px';
+            rem.style.fontWeight = 'bold';
+            rem.style.lineHeight = '1';
             rem.onclick = () => { arr.splice(i,1); saveLineup(teamNumber, arr); renderLineup(teamNumber); try{ renderAvailableBattersForTeam(localStorage.getItem('team1')||''); renderAvailableBattersForTeam(localStorage.getItem('team2')||''); }catch(e){} };
             el.appendChild(rem);
             container.appendChild(el);
@@ -593,44 +631,127 @@
         const savedTheme = localStorage.getItem('colorTheme') || 'default';
         const theme = colorThemes[savedTheme] || colorThemes.default;
         document.getElementById('mainBody').style.backgroundColor = theme.bg;
-        document.querySelector('.topnav').style.backgroundColor = theme.accent;
+        const topnavEl = document.querySelector('.topnav');
+        if (topnavEl) topnavEl.style.backgroundColor = theme.accent;
+
+        // contrast helpers
+        function hexToLuminance(hex) {
+          if (!hex) return 0;
+          hex = hex.replace('#','');
+          if (hex.length === 3) hex = hex.split('').map(h=>h+h).join('');
+          const r = parseInt(hex.substring(0,2),16)/255;
+          const g = parseInt(hex.substring(2,4),16)/255;
+          const b = parseInt(hex.substring(4,6),16)/255;
+          const a = [r,g,b].map(c => (c <= 0.03928) ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4));
+          return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2];
+        }
+        function contrastColor(hex) { return hexToLuminance(hex) > 0.5 ? '#000000' : '#ffffff'; }
+
+        function pickDarkestThemeColor(t) {
+          const candidates = [];
+          for (const k of Object.keys(t)) {
+            if (k === 'bg') continue;
+            const v = t[k];
+            if (typeof v === 'string' && v.startsWith('#')) candidates.push(v);
+          }
+          if (candidates.length === 0) return contrastColor(t.bg);
+          candidates.sort((a,b) => hexToLuminance(a) - hexToLuminance(b));
+          return candidates[0];
+        }
+        function contrastRatio(hex1, hex2) {
+          const l1 = hexToLuminance(hex1);
+          const l2 = hexToLuminance(hex2);
+          const L1 = Math.max(l1, l2);
+          const L2 = Math.min(l1, l2);
+          return (L1 + 0.05) / (L2 + 0.05);
+        }
+
+        const darkest = pickDarkestThemeColor(theme);
+        const chosenText = (contrastRatio(darkest, theme.bg) < 3) ? '#ffffff' : darkest;
+        // apply text colors for readability
+        document.getElementById('mainBody').style.color = chosenText;
         
+        // Apply smart contrast color to topnav (based on accent background)
+        const navTextColor = contrastColor(theme.accent);
+        if (topnavEl) {
+          topnavEl.style.color = navTextColor;
+          topnavEl.querySelectorAll('a').forEach(el => {
+            el.style.color = navTextColor;
+            if (el.classList.contains('active')) el.style.color = navTextColor;
+          });
+          const navTitle = topnavEl.querySelector('.nav-title');
+          if (navTitle) navTitle.style.color = navTextColor;
+        }
+        
+        // Prevent dropdown styling from being affected by theme
+        document.querySelectorAll('.dropdown-content').forEach(el => {
+          el.style.background = '#ffffff';
+          el.style.color = '#000000';
+        });
+        document.querySelectorAll('.dropdown-content button').forEach(el => {
+          el.style.color = '#000000';
+        });
+
+        // Apply darkest color everywhere, except sections that ARE that color (use white there)
+        // SKIP elements that already have white text or explicit color set
+        document.querySelectorAll('*').forEach(el => {
+          // Skip if already has explicit white color set
+          const computedColor = window.getComputedStyle(el).color.toLowerCase().replace(/\s/g,'');
+          if (computedColor === 'rgb(255,255,255)' || computedColor === '#ffffff' || el.style.color === '#ffffff') {
+            return; // keep it white
+          }
+          
+          const bgColor = window.getComputedStyle(el).backgroundColor;
+          // normalize hex to RGB for comparison
+          const darkestRGB = `rgb(${parseInt(darkest.slice(1,3),16)},${parseInt(darkest.slice(3,5),16)},${parseInt(darkest.slice(5,7),16)})`.toLowerCase().replace(/\s/g,'');
+          const elRGB = bgColor.toLowerCase().replace(/\s/g,'');
+          if (elRGB === darkestRGB) {
+            el.style.color = '#ffffff';
+          } else if (!el.style.color || el.style.color === '') {
+            el.style.color = darkest;
+          }
+        });
+
         // Apply theme to roster and lineup containers
         const rosters = document.querySelectorAll('.roster');
-        rosters.forEach(el => {
+        rosters.forEach(el => { 
           el.style.backgroundColor = theme.container;
         });
         const lineups = document.querySelectorAll('.lineup');
-        lineups.forEach(el => {
+        lineups.forEach(el => { 
           el.style.backgroundColor = theme.container;
         });
-        
+
         // Update existing roster items with theme color
         const updateRosterItems = () => {
           const rosterItems = document.querySelectorAll('.roster > div');
           rosterItems.forEach(item => {
             item.style.background = theme.rosterItem;
+            item.style.color = contrastColor(theme.rosterItem);
+            item.querySelectorAll('*').forEach(child => { if (!child.style.color || child.style.color === '') child.style.color = contrastColor(theme.rosterItem); });
           });
         };
-        
+
         // Update existing lineup items with theme color
         const updateLineupItems = () => {
           const lineupItems = document.querySelectorAll('.lineup > div:not(:last-child)');
           lineupItems.forEach(item => {
             item.style.background = theme.lineupItem;
+            item.style.color = contrastColor(theme.lineupItem);
+            item.querySelectorAll('*').forEach(child => { if (!child.style.color || child.style.color === '') child.style.color = contrastColor(theme.lineupItem); });
           });
         };
-        
+
         updateRosterItems();
         updateLineupItems();
-        
+
         // Hook into renderAvailableBattersForTeam to apply theme to new roster items
         const origRenderAvailableBattersForTeam = renderAvailableBattersForTeam;
         renderAvailableBattersForTeam = function(team) {
           origRenderAvailableBattersForTeam(team);
           updateRosterItems();
         };
-        
+
         // Hook into renderLineup to apply theme to new lineup items
         const origRenderLineup = renderLineup;
         renderLineup = function(teamNumber) {

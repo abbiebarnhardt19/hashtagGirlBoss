@@ -2,10 +2,15 @@
   <head>
       <link rel="stylesheet" href="style.css">
     <title>Warning</title>
+    <style>
+      /* Ensure select dropdown is always white/black */
+      select { background: #ffffff !important; color: #000000 !important; }
+    </style>
   </head>
 <div>
-<body style="background-color:#010613">
+<body id="mainBody" style="background-color:#010613">
 <div class="topnav" style="padding-right: 25px">
+  <span class="nav-title" style="color:#fff; font-weight:700; font-size:28px; margin-right:12px; line-height:48px; padding-top:16px; display:inline-block; margin-left:40px;">MLB Simulation</span>
   <a id="homeBtn" href="home.html" class="disabled">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house" viewBox="0 0 16 16">
     <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z"/>
@@ -40,6 +45,87 @@
 
 
   <script>
+    const colorThemes = {
+      default: { bg: '#010613', accent: '#031D44', container: '#071227' },
+      Athletics: { bg: '#EFB21E', accent: '#a2aaad', container: '#003831' },
+      PittsburgPirates: { bg: '#FDB827', accent: '#E4002B', container: '#27251F' },
+      SanDiegoPadres: { bg: '#FFC425', accent: '#A2AAAD', container: '#2F241D' },
+      SeattleMariners: { bg: '#0C2C56', accent: '#C4CED4', container: '#005C5C' },
+      SanFranciscoGiants: { bg: '#27251F', accent: '#AE8F6F', container: '#FD5A1E' },
+      StLouisCardinals: { bg: '#0C2340', accent: '#FEDB00', container: '#C41E3A' },
+      TampaBayRays: { bg: '#8FBCE6', accent: '#F5D130', container: '#092C5C' },
+      TexasRangers: { bg: '#C0111F', accent: '#003278', container: '#003278' },
+      TorontoBlueJays: { bg: '#1D2D5C', accent: '#E8291C', container: '#134A8E' },
+      MinnesotaTwins: { bg: '#D31145', accent: '#002B5C', container: '#002B5C' },
+      PhiladelphiaPhillies: { bg: '#002d72', accent: '#6BACE4', container: '#E81828' },
+      AtlantaBraves: { bg: '#13274F', accent: '#CE1141', container: '#CE1141' },
+      ChicagoWhiteSox: { bg: '#C4CED4', accent: '#27251F', container: '#27251F' },
+      MiamiMarlins: { bg: '#000000', accent: '#EF3340', container: '#00A3E0' },
+      NewYorkYankees: { bg: '#E4002C', accent: '#003087', container: '#0C2340' },
+      MilwaukeeBrewers: { bg: '#ffc52f', accent: '#12284b', container: '#12284b' },
+      LosAngelesAngels: { bg: '#003263', accent: '#862633', container: '#BA0021' },
+      ArizonaDiamondbacks: { bg: '#30CED8', accent: '#000000', container: '#A71930' },
+      BaltimoreOrioles: { bg: '#000000', accent: '#DF4601', container: '#DF4601' },
+      BostonRedSox: { bg: '#0C2340', accent: '#BD3039', container: '#BD3039' },
+      ChicagoCubs: { bg: '#CC3433', accent: '#0E3386', container: '#0E3386' },
+      CincinnatiReds: { bg: '#000000', accent: '#C6011F', container: '#C6011F' },
+      ClevelandGuardians: { bg: '#00385D', accent: '#E50022', container: '#E50022' },
+      ColoradoRockies: { bg: '#C4CED4', accent: '#131413', container: '#333366' },
+      DetroitTigers: { bg: '#FA4616', accent: '#0C2340', container: '#0C2340' },
+      HoustonAstros: { bg: '#002D62', accent: '#F4911E', container: '#EB6E1F' },
+      KansasCityRoyals: { bg: '#BD9B60', accent: '#004687', container: '#004687' },
+      LosAngelesDodgers: { bg: '#EF3E42', accent: '#A5ACAF', container: '#005A9C' },
+      WashingtonNationals: { bg: '#14225A', accent: '#AB0003', container: '#AB0003' },
+      NewYorkMets: { bg: '#FF5910', accent: '#002D72', container: '#002D72' }
+    };
+
+    // Helper: get luminance
+    function hexToLuminance(hex) {
+      if (!hex) return 0;
+      hex = hex.replace('#','');
+      if (hex.length === 3) hex = hex.split('').map(h=>h+h).join('');
+      const r = parseInt(hex.substring(0,2),16)/255;
+      const g = parseInt(hex.substring(2,4),16)/255;
+      const b = parseInt(hex.substring(4,6),16)/255;
+      const a = [r,g,b].map(c => (c <= 0.03928) ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4));
+      return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2];
+    }
+
+    // Helper: get contrasting text color
+    function contrastColor(hex) { 
+      return hexToLuminance(hex) > 0.5 ? '#000000' : '#ffffff'; 
+    }
+
+    // Apply saved color theme on page load
+    const savedTheme = localStorage.getItem('colorTheme') || 'default';
+    const theme = colorThemes[savedTheme] || colorThemes.default;
+    document.getElementById('mainBody').style.backgroundColor = theme.bg;
+    
+    const topnav = document.querySelector('.topnav');
+    if (topnav) topnav.style.backgroundColor = theme.accent;
+    
+    // Apply smart contrast color to topnav (based on accent background)
+    const navTextColor = contrastColor(theme.accent);
+    if (topnav) {
+      topnav.style.color = navTextColor;
+      topnav.querySelectorAll('a').forEach(el => {
+        el.style.color = navTextColor;
+        if (el.classList.contains('active')) el.style.color = navTextColor;
+      });
+      const navTitle = topnav.querySelector('.nav-title');
+      if (navTitle) navTitle.style.color = navTextColor;
+    }
+    
+    // Apply body text color
+    document.getElementById('mainBody').style.color = '#ffffff';
+    
+    // Apply theme to warning box background
+    const warningBox = document.querySelector('.warningbox');
+    if (warningBox) warningBox.style.backgroundColor = theme.container;
+    
+    // Apply smart text color to warning box
+    if (warningBox) warningBox.style.color = contrastColor(theme.container);
+
     const simulationBtn = document.getElementById("simulationBtn");
     const gamblingBtn = document.getElementById("gamblingBtn");
     const homeBtn = document.getElementById("homeBtn");

@@ -13,7 +13,7 @@ body {
 }
 
 .topnav {
-  background-color: #031D44;
+  background-color: rgb(161, 161, 161);
   overflow: hidden;
   height: 80px;
   width: 100%;
@@ -33,13 +33,13 @@ body {
 }
 
 .topnav a:hover {
-  background-color: #021532;
+  background-color: rgb(161, 161, 161);
   color: white;
 }
 
 .topnav a.active {
-  background-color: white;
-  color: black;
+  background-color: rgb(103, 103, 103);
+  color: rgb(129, 129, 129);
 }
 
 .disabled {
@@ -382,7 +382,7 @@ body {
 .show {display:block;}
 
 .simbtn {
-  background-color: #010613;
+  background-color: rgb(103, 103, 103);
   color: white;
   font-weight: bolder;
   padding: 16px;
@@ -402,11 +402,11 @@ body {
 
 
 .simbtn:hover, .simbtn:focus {
-  background-color: #031D44;
+  background-color: rgb(51, 51, 51);
 }
 
 .simArrowbtn {
-  background-color: #010613;
+  background-color: rgb(103, 103, 103);
   color: white;
   font-weight: bolder;
   padding: 16px;
@@ -425,6 +425,6 @@ body {
 
 
 .simArrowbtn:hover {
-  background-color: #031D44;
+  background-color: rgb(103, 103, 103);
 }
 
