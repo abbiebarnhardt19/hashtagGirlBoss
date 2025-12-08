@@ -240,6 +240,23 @@ async function runSim() {
       return;
     }
 
+    // ensure users have selected lineups and pitchers (don't fall back to example defaults here)
+    (function(){
+      const rawHome = localStorage.getItem('home_lineup');
+      const rawAway = localStorage.getItem('away_lineup');
+      const homePitch = localStorage.getItem('home_pitcher');
+      const awayPitch = localStorage.getItem('away_pitcher');
+      let homeArr = [];
+      let awayArr = [];
+      try { homeArr = rawHome ? JSON.parse(rawHome) : []; } catch(e) { homeArr = []; }
+      try { awayArr = rawAway ? JSON.parse(rawAway) : []; } catch(e) { awayArr = []; }
+
+      // If no batters or no pitchers selected, show a popup 
+      if (!homeArr.length || !awayArr.length || !homePitch || homePitch === 'Unknown' || !awayPitch || awayPitch === 'Unknown') {
+        alert('Please select both lineups and a pitcher for each team on the gambling page before running the simulation.');
+        return;
+      }
+    })();
     // Use number of simulations from localStorage (set by gambling page), default 500
     let nSims = parseInt(localStorage.getItem('num_simulations'), 10);
     if (isNaN(nSims) || nSims < 1) nSims = 500;
